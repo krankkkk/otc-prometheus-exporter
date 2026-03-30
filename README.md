@@ -4,140 +4,198 @@ This software gathers metrics from the [Open Telekom Cloud (OTC)](https://open-t
 for [Prometheus](https://prometheus.io/). The metrics are then usable in any service which can use Prometheus as a
 datasource. For example [Grafana](https://grafana.com/)
 
+## How It Works
+
+Each OTC service (namespace) is scraped independently via a `?namespace=` query parameter:
+
+```
+GET /metrics?namespace=SYS.ECS   -> ECS metrics
+GET /metrics?namespace=SYS.RDS   -> RDS metrics
+GET /metrics?namespace=SYS.ELB   -> ELB metrics
+...
+```
+
+This allows Prometheus to scrape each namespace with its own interval and timeout, and if one service fails only that scrape shows as down.
+
+Append `&enrich=false` to skip service-specific API calls and return only CES metrics (useful for debugging or reducing API load).
+
+A `/healthz` endpoint returns 200 for liveness/readiness probes.
+
 ## Available Metrics
 
-Metrics for the following services are available
+Below is a comprehensive list of metrics that this software can gather.
 
-- Elastic Cloud Server (ECS)
-- Virtual Private Cloud (VPC)
-- NAT Gateway (NAT)
-- Elastic Load Balancing (ELB)
-- Distributed Message Service (DMS)
-- **Special Case: Object Storage Service (OBS)**
+For services marked as "Service API Metrics", the exporter also calls the service-specific API to enrich CES metrics with human-readable resource names and to expose additional status/capacity metrics not available in CES.
 
-## Special Case: Object Storage Service (OBS)
+| Category      | Service                                            | Namespace     | Service API Metrics | Reference                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------- | -------------------------------------------------- | ------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compute       | Elastic Cloud Server                               | SYS.ECS       | Instance status, name mapping | [Basic ECS metrics](https://docs.otc.t-systems.com/elastic-cloud-server/umn/monitoring/basic_ecs_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+|               | Bare Metal Server                                  | SERVICE.BMS   | CES only | [BMS Metrics Under OS Monitoring](https://docs.otc.t-systems.com/bare-metal-server/umn/server_monitoring/monitored_metrics_with_agent_installed.html)                                                                                                                                                                                                                                                                                                                                                                                                |
+|               | Auto Scaling                                       | SYS.AS        | Instance counts (actual/desired/min/max), group status | [AS metrics](https://docs.otc.t-systems.com/auto-scaling/umn/as_management/as_group_and_instance_monitoring/monitoring_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Storage       | Elastic Volume Service (attached to an ECS or BMS) | SYS.EVS       | CES only | [EVS metrics](https://docs.otc.t-systems.com/elastic-volume-service/umn/viewing_evs_monitoring_data.html)                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+|               | Object Storage Service (OBS)                       | SYS.OBS       | CES only | [OBS metrics](https://docs.otc.t-systems.com/object-storage-service/umn/obs_console_operation_guide/monitoring/obs_monitoring_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                          |
+|               | Scalable File Service                              | SYS.SFS       | CES only | [SFS metrics](https://docs.otc.t-systems.com/scalable-file-service/umn/management/monitoring/sfs_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+|               | SFS Turbo                                          | SYS.EFS       | CES only | [SFS Turbo metrics](https://docs.otc.t-systems.com/scalable-file-service/umn/management/monitoring/sfs_turbo_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|               | Cloud Backup and Recovery                          | SYS.CBR       | Backup status, backup size | [CBR metrics](https://docs.otc.t-systems.com/cloud-backup-recovery/umn/monitoring/cbr_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Network       | Elastic IP and bandwidth                           | SYS.VPC       | Bandwidth size, name mapping | [VPC metrics](https://docs.otc.t-systems.com/virtual-private-cloud/umn/operation_guide_new_console_edition/monitoring/supported_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                        |
+|               | Elastic Load Balance                               | SYS.ELB       | LB operating status, name mapping | [ELB metrics](https://docs.otc.t-systems.com/elastic-load-balancing/umn/monitoring/monitoring_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|               | NAT Gateway                                        | SYS.NAT       | Gateway status, name mapping | [NAT Gateway metrics](https://docs.otc.t-systems.com/nat-gateway/umn/monitoring_management/supported_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+|               | Enterprise VPN                                     | SYS.VPN       | CES only | [VPN metrics](https://docs.otc.t-systems.com/virtual-private-network/umn/monitoring/supported_metrics.html) |
+| Security      | Web Application Firewall                           | SYS.WAF       | CES only | [WAF metrics](https://docs.otc.t-systems.com/web-application-firewall/umn/monitoring_metrics.html)
+|               | CES Alarms                                         | SYS.ALARM     | Alarm state (ok/alarm/insufficient_data), severity | [CES Alarm API](https://docs.otc.t-systems.com/cloud-eye/api-ref/alarm_management/querying_alarms.html)                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Application   | Distributed Message Service                        | SYS.DMS       | Storage used/total, partitions, name mapping | [DMS metrics](https://docs.otc.t-systems.com/distributed-message-service/umn/monitoring/kafka_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+|               | Distributed Cache Service                          | SYS.DCS       | Instance status, capacity, name mapping | [DCS metrics](https://docs.otc.t-systems.com/distributed-cache-service/umn/monitoring/dcs_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Database      | Relational Database Service                        | SYS.RDS       | Instance/node status, volume size, name mapping | [RDS for MySQL](https://docs.otc.t-systems.com/relational-database-service/umn/working_with_rds_for_mysql/metrics_and_alarms/configuring_displayed_metrics.html) / [PostgreSQL](https://docs.otc.t-systems.com/relational-database-service/umn/working_with_rds_for_postgresql/metrics_and_alarms/configuring_displayed_metrics.html) / [SQL Server](https://docs.otc.t-systems.com/relational-database-service/umn/working_with_rds_for_sql_server/metrics_and_alarms/configuring_displayed_metrics.html) |
+|               | Document Database Service                          | SYS.DDS       | Instance/node status, name mapping | [DDS metrics](https://docs.otc.t-systems.com/document-database-service/umn/monitoring/interconnected_with_cloud_eye/dds_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                |
+|               | GaussDB NoSQL                                      | SYS.NoSQL     | CES only | [GaussDB(for Cassandra) metrics](https://docs.otc.t-systems.com/gaussdb-nosql/umn/working_with_gaussdbfor_cassandra/monitoring_and_alarm_reporting/gaussdbfor_cassandra_monitoring_metrics.html)                                                                                                                                                                                                                                                                                                                                                     |
+|               | GaussDB(for MySQL)                                 | SYS.GAUSSDB   | CES only | [GaussDB(for MySQL) metrics](https://docs.otc.t-systems.com/gaussdb-mysql/umn/working_with_gaussdbfor_mysql/monitoring/configuring_displayed_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                           |
+|               | GaussDB(for openGauss)                             | SYS.GAUSSDBV5 | CES only | [GaussDB(for openGauss) metrics](https://docs.otc.t-systems.com/gaussdb-opengauss/umn/working_with_gaussdbopengauss/monitoring_and_alarming/metrics.html)                                                                                                                                                                                                                                                                                                                                                                                            |
+| Data analysis | Data Warehouse Service                             | SYS.DWS       | CES only | [DWS metrics](https://docs.otc.t-systems.com/data-warehouse-service/umn/monitoring_and_alarms/monitoring_clusters_using_cloud_eye.html)                                                                                                                                                                                                                                                                                                                                                                                                              |
+|               | Cloud Search Service                               | SYS.ES        | CES only | [CSS metrics](https://docs.otc.t-systems.com/cloud-search-service/umn/monitoring_a_cluster/supported_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+
+[CloudEyeDoc]:https://docs.otc.t-systems.com/cloud-eye/api-ref/appendix/services_interconnected_with_cloud_eye.html#ces-03-0059
+
+### Note: ECS/BMS OS-Level Metrics Require ICAgent
+
+Some ECS and BMS metrics (e.g., `disk_read_bytes_rate`, `disk_write_bytes_rate`, detailed memory metrics) require the **ICAgent (Telescope)** to be installed inside the guest OS. Without it, these metrics will show as "No data" in Cloud Eye and will not appear in the exporter output.
+
+Basic hypervisor-level metrics (CPU utilization, network traffic) are available without the agent. See the [ICAgent installation guide](https://docs.otc.t-systems.com/cloud-eye/umn/server_monitoring/installing_and_configuring_the_agent_on_a_linux_ecs.html) for details.
+
+### Special Case: Object Storage Service (OBS)
 
 The Object Storage Service (OBS) metrics have some unique considerations:
 
-1. **Global Project ID Requirement**: Unlike other services OBS is a global service. This means you need a global project ID to gather OBS metrics. 
-   The supported projects are `eu_de` and `eu_nl`. 
+1. **Global Project ID Requirement**: Unlike other services OBS is a global service. This means you need a global project ID to gather OBS metrics.
+   The supported projects are `eu-de` and `eu-nl`.
 2. **Limitation on Project Scoped Metrics**: OBS metrics cannot be collected with project scoped metrics since a global project ID is needed, which transcends individual project scopes.
-
 
 ## Requirements
 
-- OTC-Credentials
+- OTC credentials (username/password or AK/SK)
+- IAM permissions (see below)
+
+## IAM Permissions
+
+The exporter needs read-only access to the Cloud Eye (CES) API and to each service's listing API.
+
+### Simplest: Tenant Guest role
+
+Assign the **Tenant Guest** role at both **global** and **regional project** scope. This grants `get*`, `list*`, `head*` on all services except IAM.
+
+### Fine-grained: ReadOnlyAccess policies (least privilege)
+
+**CES ReadOnlyAccess** is the core requirement -- it covers reading CES metrics for all namespaces. Additional per-service policies are only needed for services where the exporter calls the service-specific API:
+
+| Policy | Needed for |
+| --- | --- |
+| **CES ReadOnlyAccess** | CES metrics for all namespaces (required) |
+| **ECS ReadOnlyAccess** | List servers (name mapping + instance status) |
+| **AOM ReadOnlyAccess** | AOM host metrics with `ecs_aom_` prefix (required for per-device/per-NIC/per-mountpoint metrics when ECS enrichment is enabled) |
+| **RDS ReadOnlyAccess** | List RDS instances (name mapping + status/nodes) |
+| **ELB ReadOnlyAccess** | List load balancers (name mapping + operating status) |
+| **DMS ReadOnlyAccess** | List Kafka instances (name mapping + storage/partitions) |
+| **NAT ReadOnlyAccess** | List NAT gateways (name mapping + status) |
+| **DCS ReadOnlyAccess** | List Redis instances (name mapping + status/capacity) |
+| **DDS ReadOnlyAccess** | List MongoDB instances (name mapping + node status) |
+| **VPC ReadOnlyAccess** | List bandwidths (name mapping + size) |
+| **CBR ReadOnlyAccess** | List backups (status/size) |
+| **AutoScaling ReadOnlyAccess** | List scaling groups (instance counts/status) |
+
+CES-only namespaces (WAF, BMS, OBS, EVS, SFS, EFS, DWS, CSS, GaussDB, GaussDBv5, NoSQL, VPN) need **no additional policies** beyond CES ReadOnlyAccess.
+
+All policies must be assigned at the **regional project** scope for the relevant region (`eu-de` or `eu-nl`).
 
 ## Usage & Configuration
 
-In this section you will learn how to use and configure this software.
-The configuration happens via environment variables and one configuration file.
+### Environment Variables
 
-1. Obtain the necessary credentials for the OTC. You need a username, password, project id and domain name.
+| Environment variable | Default | Description |
+| --- | --- | --- |
+| `OS_USERNAME` | - | **Required*** OTC username |
+| `OS_PASSWORD` | - | **Required*** OTC password |
+| `OS_ACCESS_KEY` | - | **Required*** AK (alternative to username/password) |
+| `OS_SECRET_KEY` | - | **Required*** SK (alternative to username/password) |
+| `OS_PROJECT_ID` | - | **Required** OTC project ID |
+| `OS_DOMAIN_NAME` | - | **Required** OTC domain name / tenant ID |
+| `OS_REGION_PROJECT_ID` | - | Region-level project ID for global services (OBS). Auto-discovered if not set. |
+| `REGION` | `eu-de` | OTC region (`eu-de` or `eu-nl`) |
+| `PORT` | `39100` | HTTP server port |
+| `LOG_LEVEL` | `INFO` | Log level (`DEBUG`, `INFO`, `WARN`, `ERROR`) |
+| `REQUEST_TIMEOUT` | `10` | HTTP request timeout in seconds for OTC API calls |
+| `IDLE_CONN_TIMEOUT` | `90` | How long idle HTTP connections stay in the pool in seconds (set higher than scrape interval) |
+| `COLLECT_TIMEOUT` | `55` | Maximum collect time in seconds per scrape (should be less than Prometheus scrape_timeout) |
+| `CES_BATCH_SIZE` | `500` | Max metrics per CES batch API request |
+| `CES_LOOKBACK` | `10` | CES lookback window in minutes (how far back to query for datapoints) |
+| `AOM_BATCH_SIZE` | `20` | Max metrics per AOM data API request |
+| `AOM_CONCURRENCY` | `5` | Max concurrent AOM API calls per scrape |
 
-2. Set the desired namespaces as a list of comma seperated values in the environment variable `NAMESPACES`.
-
-3. The other environment variables are not required. The following table covers all environment variables.
-
-| environment variable        | default value | allowed values                   | description                                                                                                                                                                                                                                                                |
-| --------------------------- | ------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `OS_USERNAME`               | none          | valid username                   | **REQUIRED** User in the OTC with access to the API                                                                                                                                                                                                                        |
-| `OS_PASSWORD`               | none          | valid password                   | **REQUIRED** Password for the user                                                                                                                                                                                                                                         |
-| `OS_ACCESS_KEY`             | none          | valid access key                 | **REQUIRED** You can instead of username/password also provide the users AK and SK                                                                                                                                                                                         |
-| `OS_SECRET_KEY`             | none          | valid secret key                 | **REQUIRED** You can instead of username/password also provide the users AK and SK                                                                                                                                                                                         |
-| `OS_PROJECT_ID`             | none          | valid project id                 | **REQUIRED** Project from which the metrics should be gathered. Obtainable in the OTC console IAM -> Projects -> View your Project -> You can now see the ProjectID                                                                                                        |
-| `OS_DOMAIN_NAME`            | none          | valid domain name                | **REQUIRED** Domainname/Tenant ID. The value in the OTC console on the top right `OTC-EU-DE-{somenumberhere}`.                                                                                                                                                             |
-| `NAMESPACES`                | none          | e.g. SYS.ECS,SERVICE.BMS,ECS,BMS | **REQUIRED** Specific namespaces for instances you want to get the metrics from. See list of all namespaces in the CloudEye docs [CloudEyeDoc]. If namespace is available in CloudEye docs you can also use namespace without prefix (SYS.ECS -> ECS, SERVICE.BMS -> BMS). |
-| `REGION`                    | `eu-de`       | `eu-de`, `eu-nl`                 | Region where your project is located                                                                                                                                                                                                                                       |
-| `PORT`                      | `39100`       | any valid unused port            | Port on which metrics are served                                                                                                                                                                                                                                           |
-| `WAITDURATION`              | `60`          | any positive integer             | Time in seconds between two API call fetches                                                                                                                                                                                                                               |
-| `FETCH_RESOURCE_ID_TO_NAME` | false         | boolean                          | Turns the mapping of resource id to resource name on or off                                                                                                                                                                                                                |
-| `LOG_LEVEL`                 | `INFO`        | `INFO`, `WARN`, `DEBUG`, `ERROR` | Shows the corresponding logs                                                                                                                                                                                                                                               |
-
-
-Below is a comprehensive list of metrics that this software can gather. 
-Note: The "Translatable" column indicates whether the resource ID can be mapped to its corresponding resource name:
-
-
-| Category      | Service                                            | Namespace     | Translatable | Reference                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| ------------- | -------------------------------------------------- | ------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Compute       | Elastic Cloud Server                               | SYS.ECS       | Yes          | [Basic ECS metrics](https://docs.otc.t-systems.com/elastic-cloud-server/umn/monitoring/basic_ecs_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-|               | Bare Metal Server                                  | SERVICE.BMS   | No           | [BMS Metrics Under OS Monitoring](https://docs.otc.t-systems.com/bare-metal-server/umn/server_monitoring/monitored_metrics_with_agent_installed.html)                                                                                                                                                                                                                                                                                                                                                                                                |
-|               | Auto Scaling                                       | SYS.AS        | No           | [AS metrics](https://docs.otc.t-systems.com/auto-scaling/umn/as_management/as_group_and_instance_monitoring/monitoring_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| Storage       | Elastic Volume Service (attached to an ECS or BMS) | SYS.EVS       | Yes          | [EVS metrics](https://docs.otc.t-systems.com/elastic-volume-service/umn/viewing_evs_monitoring_data.html)                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-|               | Object Storage Service (OBS)                       | SYS.OBS       | Yes          | [OBS metrics](https://docs.otc.t-systems.com/object-storage-service/umn/obs_console_operation_guide/monitoring/obs_monitoring_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                          |
-|               | Scalable File Service                              | SYS.SFS       | No           | [SFS metrics](https://docs.otc.t-systems.com/scalable-file-service/umn/management/monitoring/sfs_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-|               | SFS Turbo                                          | SYS.EFS       | Yes          | [SFS Turbo metrics](https://docs.otc.t-systems.com/scalable-file-service/umn/management/monitoring/sfs_turbo_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                           |
-|               | Cloud Backup and Recovery                          | SYS.CBR       | Yes          | [CBR metrics](https://docs.otc.t-systems.com/cloud-backup-recovery/umn/monitoring/cbr_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Network       | Elastic IP and bandwidth                           | SYS.VPC       | Yes          | [VPC metrics](https://docs.otc.t-systems.com/virtual-private-cloud/umn/operation_guide_new_console_edition/monitoring/supported_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                        |
-|               | Elastic Load Balance                               | SYS.ELB       | Yes          | [ELB metrics](https://docs.otc.t-systems.com/elastic-load-balancing/umn/monitoring/monitoring_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-|               | NAT Gateway                                        | SYS.NAT       | Yes          | [NAT Gateway metrics](https://docs.otc.t-systems.com/nat-gateway/umn/monitoring_management/supported_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Security      | Web Application Firewall                           | SYS.WAF       | Yes          | [WAF metrics](https://docs.otc.t-systems.com/web-application-firewall/umn/monitoring_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-| Application   | Distributed Message Service                        | SYS.DMS       | Yes          | [DMS metrics](https://docs.otc.t-systems.com/distributed-message-service/umn/monitoring/kafka_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-|               | Distributed Cache Service                          | SYS.DCS       | Yes          | [DCS metrics](https://docs.otc.t-systems.com/distributed-cache-service/umn/monitoring/dcs_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                              |
-| Database      | Relational Database Service                        | SYS.RDS       | Yes          | [RDS for MySQL metrics](https://docs.otc.t-systems.com/relational-database-service/umn/working_with_rds_for_mysql/metrics_and_alarms/configuring_displayed_metrics.html)<br>[RDS for PostgreSQL metrics](https://docs.otc.t-systems.com/relational-database-service/umn/working_with_rds_for_postgresql/metrics_and_alarms/configuring_displayed_metrics.html)<br>[RDS for SQL Server metrics](https://docs.otc.t-systems.com/relational-database-service/umn/working_with_rds_for_sql_server/metrics_and_alarms/configuring_displayed_metrics.html) |
-|               | Document Database Service                          | SYS.DDS       | No           | [DDS metrics](https://docs.otc.t-systems.com/document-database-service/umn/monitoring/interconnected_with_cloud_eye/dds_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                |
-|               | GaussDB NoSQL                                      | SYS.NoSQL     | Yes          | [GaussDB(for Cassandra) metrics](https://docs.otc.t-systems.com/gaussdb-nosql/umn/working_with_gaussdbfor_cassandra/monitoring_and_alarm_reporting/gaussdbfor_cassandra_monitoring_metrics.html)                                                                                                                                                                                                                                                                                                                                                     |
-|               | GaussDB(for MySQL)                                 | SYS.GAUSSDB   | No           | [GaussDB(for MySQL) metrics](https://docs.otc.t-systems.com/gaussdb-mysql/umn/working_with_gaussdbfor_mysql/monitoring/configuring_displayed_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                           |
-|               | GaussDB(for openGauss)                             | SYS.GAUSSDBV5 | Yes          | [GaussDB(for openGauss) metrics](https://docs.otc.t-systems.com/gaussdb-opengauss/umn/working_with_gaussdbopengauss/monitoring_and_alarming/metrics.html)                                                                                                                                                                                                                                                                                                                                                                                            |
-| Data analysis | Data Warehouse Service                             | SYS.DWS       | Yes          | [DWS metrics](https://docs.otc.t-systems.com/data-warehouse-service/umn/monitoring_and_alarms/monitoring_clusters_using_cloud_eye.html)                                                                                                                                                                                                                                                                                                                                                                                                              |
-|               | Cloud Search Service                               | SYS.ES        | No           | [CSS metrics](https://docs.otc.t-systems.com/cloud-search-service/umn/monitoring_a_cluster/supported_metrics.html)                                                                                                                                                                                                                                                                                                                                                                                                                                   |
-
-[CloudEyeDoc]:https://docs.otc.t-systems.com/cloud-eye/api-ref/appendix/services_interconnected_with_cloud_eye.html#ces-03-0059
+*Either username+password or access-key+secret-key is required (mutually exclusive).
 
 ### Kubernetes (Helm)
 
 ```shell
 helm repo add otc-prometheus-exporter https://iits-consulting.github.io/otc-prometheus-exporter/
 helm search repo otc-prometheus-exporter
-helm install otc-prometheus-exporter otc-prometheus-exporter/otc-prometheus-exporter --set your_values.yaml
+helm install otc-prometheus-exporter otc-prometheus-exporter/otc-prometheus-exporter -f your_values.yaml
 ```
+
+The Helm chart uses a **PodMonitor** to scrape each namespace independently. All configuration is driven by `targets.namespaces` — the same block controls scraping, dashboards, and alert rules:
+
+```yaml
+targets:
+  defaults:
+    enabled: true
+    enrich: true       # enrich CES metrics with names from service APIs
+    dashboard: true    # deploy Grafana dashboard ConfigMap
+    rules: false       # deploy PrometheusRule alerts (only if alerts/ file exists)
+  namespaces:
+    SYS.ECS: {}        # inherits all defaults
+    SYS.RDS:
+      rules: true      # enable RDS alerts
+    SYS.WAF:
+      enabled: false   # disabled — not scraped, no dashboard, no alerts
+
+dashboards:
+  enabled: true        # deploy dashboard ConfigMaps
+  selfMonitoring: true # include the exporter self-monitoring dashboard
+
+prometheusRules:
+  enabled: true        # deploy PrometheusRule CRDs
+
+podMonitor:
+  enabled: true
+  selfMonitoring: true # scrape exporter's own metrics (go_*, otc_scrape_*, otc_http_*)
+```
+
+See [`charts/otc-prometheus-exporter/values.yaml`](charts/otc-prometheus-exporter/values.yaml) for the full reference.
 
 ### Docker and Docker Compose
 
-You can choose to run the application either as a single docker container or in combination with a Prometheus and Grafana server using Docker Compose.
-
-**Running a Single Docker Container**
-
-If you want a single docker container with the application running then you can do it by following these steps.
-
-1. Make sure you have docker installed and running.
-2. Copy the `.env.template` to `.env` and fill it out. This makes the docker command much shorter this way and your secrets are not listed in your shell history.
-3. Run the following:
+**Single container:**
 
 ```shell
-docker pull ghcr.io/iits-consulting/otc-prometheus-exporter:latest
+cp .env.template .env
+# Fill in your OTC credentials
 docker run --env-file .env ghcr.io/iits-consulting/otc-prometheus-exporter:latest
 ```
 
+**Docker Compose** (with Prometheus + Grafana):
 
-If you want to start the application, a Prometheus, and Grafana server all at once, then Docker Compose will allow you to do so. This is particularly useful for a quick test or local development, as the entire tool chain is running in this scenario.
+```shell
+cp .env.template .env
+# Fill in your OTC credentials
+docker-compose --env-file .env up --build otc-prometheus-exporter -d
+```
 
-1. Make sure you have Docker and Docker Compose installed and running.
-2. Copy the .env.template to .env and fill it out, similar to the single container setup. This keeps your docker command short and avoids having your secrets listed in your shell history.
-3. Run the following: `docker-compose --env-file .env up`
-
+This starts the exporter, Prometheus (localhost:9090), and Grafana (localhost:3000). Prometheus is pre-configured to scrape all namespaces. Edit `docker.local/prometheus/prometheus.yaml` to adjust which namespaces are scraped.
 
 ### Binary
 
-If you want to run the application directly as a binary then you can do it by following these steps.
-
 1. Download and decompress the binary from the release page
-2. `chmod +x otc-prometheus-exporter` to make it executable.
-3. On macOS, it might be necessary to remove the Apple quarantine property from it too.
-   This can be done with: `xattr -d com.apple.quarantine otc-prometheues-exporter`
-4. `cp .env.template .env`
-5. Fill out the values in the `.env` file
-6. Run the programm: `env $(cat .env) ./otc-prometheues-exporter`
-
-## Dashboards
-
-Here are pictures of how the dashboards look. Keep in mind that not always all metrics are populated because they are not sent by the Cloud Eye Service.
-
-![overview](./img/overview.png)
-![overview_ecs](./img/overview_ecs.png)
-![overview_rds](./img/overview_rds_postgres.png)
-
+2. `chmod +x otc-prometheus-exporter`
+3. On macOS: `xattr -d com.apple.quarantine otc-prometheus-exporter`
+4. `cp .env.template .env` and fill out the values
+5. Run: `env $(cat .env) ./otc-prometheus-exporter`
 
 ## References
 

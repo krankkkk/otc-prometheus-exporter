@@ -1,0 +1,118 @@
+suite: additionalPrometheusRulesMap
+templates:
+  - additionalPrometheusRules.yaml
+tests:
+  - it: renders nothing when map is empty
+    set:
+      additionalPrometheusRulesMap: {}
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders a PrometheusRule CRD per entry
+    set:
+      additionalPrometheusRulesMap:
+        my-alerts:
+          groups:
+            - name: test-group
+              rules:
+                - alert: TestAlert
+                  expr: up == 0
+        other-alerts:
+          groups:
+            - name: other-group
+              rules:
+                - alert: OtherAlert
+                  expr: node_load1 > 10
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: sets correct apiVersion and kind
+    set:
+      additionalPrometheusRulesMap:
+        my-alerts:
+          groups:
+            - name: test-group
+              rules:
+                - alert: TestAlert
+                  expr: up == 0
+    asserts:
+      - isKind:
+          of: PrometheusRule
+      - isAPIVersion:
+          of: monitoring.coreos.com/v1
+
+  - it: derives resource name from release and map key
+    release:
+      name: exporter
+    set:
+      additionalPrometheusRulesMap:
+        custom-rds-alerts:
+          groups:
+            - name: pg
+              rules:
+                - alert: A
+                  expr: "1"
+    asserts:
+      - equal:
+          path: metadata.name
+          value: exporter-custom-rds-alerts
+
+  - it: respects namespaceOverride
+    set:
+      namespaceOverride: monitoring
+      additionalPrometheusRulesMap:
+        my-alerts:
+          groups:
+            - name: g
+              rules:
+                - alert: A
+                  expr: "1"
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: monitoring
+
+  - it: includes additionalLabels when set
+    set:
+      additionalPrometheusRulesMap:
+        my-alerts:
+          additionalLabels:
+            team: platform
+            env: prod
+          groups:
+            - name: g
+              rules:
+                - alert: A
+                  expr: "1"
+    asserts:
+      - equal:
+          path: metadata.labels.team
+          value: platform
+      - equal:
+          path: metadata.labels.env
+          value: prod
+
+  - it: renders spec.groups from the map entry
+    set:
+      additionalPrometheusRulesMap:
+        my-alerts:
+          groups:
+            - name: test-group
+              rules:
+                - alert: HighCPU
+                  expr: cpu_util > 80
+                  for: 5m
+                  labels:
+                    severity: warning
+    asserts:
+      - equal:
+          path: spec.groups[0].name
+          value: test-group
+      - equal:
+          path: spec.groups[0].rules[0].alert
+          value: HighCPU
+      - equal:
+          path: spec.groups[0].rules[0].expr
+          value: cpu_util > 80

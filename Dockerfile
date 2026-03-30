@@ -1,17 +1,17 @@
-FROM golang:1.24-alpine AS build
+FROM golang:1.26-alpine AS build
 
-ARG CGO=0
-ENV CGO_ENABLED=${CGO}
+ENV CGO_ENABLED=0
 ENV GOOS=linux
-ENV GO111MODULE=on
 
-WORKDIR /go/src/github.com/iits-consulting/otc-prometheus-exporter
-COPY . /go/src/github.com/iits-consulting/otc-prometheus-exporter
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
 
-RUN go build -o otc-prometheus-exporter main.go && \
-    mv otc-prometheus-exporter /usr/local/bin
+COPY . .
+RUN go build -o /otc-prometheus-exporter .
 
-FROM alpine:3.21
-COPY --from=build /usr/local/bin/otc-prometheus-exporter /usr/bin/otc-prometheus-exporter
+FROM scratch
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=build /otc-prometheus-exporter /otc-prometheus-exporter
 EXPOSE 39100
-ENTRYPOINT [ "otc-prometheus-exporter" ]
+ENTRYPOINT [ "/otc-prometheus-exporter" ]

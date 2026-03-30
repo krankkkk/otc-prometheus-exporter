@@ -1,0 +1,58 @@
+suite: defaultPrometheusRules
+templates:
+  - defaultPrometheusRules.yaml
+tests:
+  - it: renders nothing when prometheusRules.enabled is false
+    set:
+      prometheusRules:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders one PrometheusRule per namespace with rules and a matching alert file
+    values:
+      - values/only-elb-obs-rules.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: skips namespaces without alert files even when rules is true
+    values:
+      - values/only-ecs-rules-no-file.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: skips disabled namespaces even with rules enabled
+    set:
+      prometheusRules:
+        enabled: true
+      targets:
+        defaults:
+          enabled: false
+          rules: true
+        namespaces:
+          SYS.ELB: {}
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: creates PrometheusRule CRDs with correct metadata
+    values:
+      - values/only-elb-obs-rules.yaml
+    asserts:
+      - isKind:
+          of: PrometheusRule
+      - isAPIVersion:
+          of: monitoring.coreos.com/v1
+
+  - it: respects namespaceOverride
+    values:
+      - values/only-elb-obs-rules.yaml
+    set:
+      namespaceOverride: monitoring
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: monitoring

@@ -1,0 +1,96 @@
+suite: name and namespace overrides
+tests:
+  - it: fullnameOverride controls deployment name
+    templates:
+      - deployment.yaml
+    values:
+      - values/name-overrides.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-fullname
+
+  - it: fullnameOverride controls deployment namespace
+    templates:
+      - deployment.yaml
+    values:
+      - values/name-overrides.yaml
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: custom-ns
+
+  - it: fullnameOverride controls serviceaccount name
+    templates:
+      - serviceaccount.yaml
+    values:
+      - values/name-overrides.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-fullname
+      - equal:
+          path: metadata.namespace
+          value: custom-ns
+
+  - it: fullnameOverride controls podmonitor name
+    templates:
+      - podmonitor.yaml
+    values:
+      - values/name-overrides.yaml
+    set:
+      podMonitor:
+        enabled: true
+        selfMonitoring: false
+        defaults:
+          interval: "30s"
+          scrapeTimeout: "15s"
+    asserts:
+      - equal:
+          path: metadata.name
+          value: custom-fullname
+      - equal:
+          path: metadata.namespace
+          value: custom-ns
+
+  - it: nameOverride controls resource name when fullnameOverride is not set
+    templates:
+      - deployment.yaml
+    values:
+      - values/name-overrides.yaml
+    set:
+      fullnameOverride: ""
+    release:
+      name: my-release
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release-my-exporter
+
+  - it: namespaceOverride applies to env-secrets
+    templates:
+      - env-secrets.yaml
+    values:
+      - values/name-overrides.yaml
+    set:
+      deployment:
+        env:
+          REGION: "eu-de"
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: custom-ns
+
+  - it: namespaceOverride applies to dashboard configmaps
+    templates:
+      - dashboard-configmaps.yaml
+    values:
+      - values/name-overrides.yaml
+    set:
+      dashboards:
+        enabled: true
+        selfMonitoring: true
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: custom-ns

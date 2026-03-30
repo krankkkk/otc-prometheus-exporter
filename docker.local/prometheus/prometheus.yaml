@@ -1,8 +1,8 @@
 # my global config
 global:
-  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
-  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
-  # scrape_timeout is set to the global default (10s).
+  scrape_interval: 30s
+  scrape_timeout: 15s
+  evaluation_interval: 30s
 
 # Alertmanager configuration
 alerting:
@@ -11,19 +11,192 @@ alerting:
         - targets:
           # - alertmanager:9093
 
-# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
 rule_files:
 # - "first_rules.yml"
-# - "second_rules.yml"
 
-# A scrape configuration containing exactly one endpoint to scrape:
-# Here it's Prometheus itself.
+# Each OTC namespace is scraped as a separate target via the ?namespace= query param.
+# Add or remove namespaces below to match your OTC project.
+#
+# Required IAM permissions:
+#   Simplest: "Tenant Guest" role (global + regional project scope)
+#   Fine-grained: CES ReadOnlyAccess + per-service ReadOnlyAccess for services
+#   that list resources (ECS, RDS, ELB, DMS, NAT, DCS, DDS, VPC, CBR, AS).
+#   CES-only namespaces (WAF, BMS, OBS, EVS, SFS, EFS, DWS, CSS, GaussDB) only
+#   need CES ReadOnlyAccess.
+
 scrape_configs:
-  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
-  - job_name: "prometheus"
+  # --- Exporter self-monitoring (go_*, process_*, otc_scrape_*) ---
+  - job_name: "otc-exporter"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
 
-    # metrics_path defaults to '/metrics'
-    # scheme defaults to 'http'.
+  # --- Compute ---
+  - job_name: "otc-ecs"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.ECS"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
 
+  - job_name: "otc-bms"
+    metrics_path: /metrics
+    params:
+      namespace: ["SERVICE.BMS"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-as"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.AS"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  # --- Network ---
+  - job_name: "otc-vpc"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.VPC"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-elb"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.ELB"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-nat"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.NAT"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  # --- Storage ---
+  - job_name: "otc-evs"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.EVS"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-obs"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.OBS"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-sfs"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.SFS"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-efs"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.EFS"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-cbr"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.CBR"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  # --- Database ---
+  - job_name: "otc-rds"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.RDS"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-dds"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.DDS"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-gaussdb"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.GAUSSDB"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-gaussdbv5"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.GAUSSDBV5"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-nosql"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.NoSQL"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  # --- Application ---
+  - job_name: "otc-dms"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.DMS"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-dcs"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.DCS"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  # --- VPN ---
+  - job_name: "otc-vpn"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.VPN"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  # --- Alarms ---
+  - job_name: "otc-alarm"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.ALARM"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  # --- Security ---
+  - job_name: "otc-waf"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.WAF"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  # --- Analytics ---
+  - job_name: "otc-dws"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.DWS"]
+    static_configs:
+      - targets: ["otc-prometheus-exporter:39100"]
+
+  - job_name: "otc-css"
+    metrics_path: /metrics
+    params:
+      namespace: ["SYS.ES"]
     static_configs:
       - targets: ["otc-prometheus-exporter:39100"]

@@ -1,6 +1,10 @@
 package internal
 
 import (
+	"fmt"
+	"os"
+
+	"go.elastic.co/ecszap"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -12,6 +16,8 @@ type ILogger interface {
 	Error(msg string, tags ...interface{})
 	Panic(msg string, tags ...interface{})
 	Sync() error
+	// WithFields returns a new logger with the given key-value pairs baked in.
+	WithFields(tags ...interface{}) ILogger
 }
 
 type Logger struct {
@@ -33,12 +39,10 @@ func NewLogger(logLevel string) ILogger {
 		level = zapcore.InfoLevel
 	}
 
-	config := zap.NewProductionConfig()
+	encoderConfig := ecszap.NewDefaultEncoderConfig()
+	core := ecszap.NewCore(encoderConfig, os.Stderr, level)
+	internalLogger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 
-	// Set level to our chosen level above
-	config.Level = zap.NewAtomicLevelAt(level)
-
-	internalLogger, _ := config.Build()
 	return &Logger{internalLogger: internalLogger}
 }
 
@@ -66,19 +70,21 @@ func (l *Logger) Sync() error {
 	return l.internalLogger.Sync()
 }
 
+func (l *Logger) WithFields(tags ...interface{}) ILogger {
+	return &Logger{internalLogger: l.internalLogger.With(tagsToZapFields(tags...)...)}
+}
+
 func tagsToZapFields(tags ...interface{}) (field []zap.Field) {
 	var zapFields []zap.Field
 
-	// Iterate over tags and create appropriate fields so that we have json output
-
-	for i := 0; i < len(tags); i += 2 {
+	for i := 0; i+1 < len(tags); i += 2 {
 		key, didCast := tags[i].(string)
 		value := tags[i+1]
 
 		if didCast {
 			zapFields = append(zapFields, zap.Any(key, value))
 		} else {
-			panic("( logging.go -> tagsToZapFields() ) Tag key must be string to convert to zap field.")
+			zapFields = append(zapFields, zap.Any(fmt.Sprintf("invalid_key_%d", i), value))
 		}
 	}
 

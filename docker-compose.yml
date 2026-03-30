@@ -1,23 +1,26 @@
-version: "3.9"
-
 services:
 
   otc-prometheus-exporter:
     build: .
     ports:
-      - "$PORT:$PORT"
+      - "39100:39100"
 
     environment:
-      NAMESPACES: "$NAMESPACES"
-      PORT: "$PORT"
+      PORT: "39100"
+      REGION: "$REGION"
       OS_USERNAME: "$OS_USERNAME"
       OS_PASSWORD: "$OS_PASSWORD"
       OS_ACCESS_KEY: "$OS_ACCESS_KEY"
       OS_SECRET_KEY: "$OS_SECRET_KEY"
       OS_PROJECT_ID: "$OS_PROJECT_ID"
       OS_DOMAIN_NAME: "$OS_DOMAIN_NAME"
-      FETCH_RESOURCE_ID_TO_NAME: "$FETCH_RESOURCE_ID_TO_NAME"
-      LOGGING: "$LOGGING"
+      LOG_LEVEL: "${LOG_LEVEL:-INFO}"
+      # OS_REGION_PROJECT_ID: ""  # For OBS; auto-discovered if not set
+      # REQUEST_TIMEOUT: "10"
+      # CES_BATCH_SIZE: "500"
+      # CES_LOOKBACK: "10"
+      # AOM_BATCH_SIZE: "20"
+      # AOM_CONCURRENCY: "5"
 
   prometheus:
     image: "prom/prometheus:latest"

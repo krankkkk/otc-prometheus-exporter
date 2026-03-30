@@ -1,0 +1,43 @@
+{{- if .Values.podMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ include "otc-prometheus-exporter.fullname" . }}
+  namespace: {{ template "otc-prometheus-exporter.namespace" . }}
+  labels:
+    {{- include "otc-prometheus-exporter.labels" . | nindent 4 }}
+    {{- with .Values.podMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  {{- with .Values.podMonitor.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "otc-prometheus-exporter.selectorLabels" . | nindent 6 }}
+  podMetricsEndpoints:
+    {{- if .Values.podMonitor.selfMonitoring }}
+    - path: /metrics
+      port: metrics
+      interval: {{ .Values.podMonitor.defaults.interval }}
+      scrapeTimeout: {{ .Values.podMonitor.defaults.scrapeTimeout }}
+    {{- end }}
+    {{- range $namespace, $config := .Values.targets.namespaces }}
+    {{- $values := mustMergeOverwrite (deepCopy $.Values.targets.defaults) ($config | default dict) }}
+    {{- if $values.enabled }}
+    - path: /metrics
+      port: metrics
+      params:
+        namespace:
+          - {{ $namespace }}
+        {{- if hasKey $values "enrich" }}
+        enrich:
+          - {{ $values.enrich | quote }}
+        {{- end }}
+      interval: {{ $values.interval | default $.Values.podMonitor.defaults.interval }}
+      scrapeTimeout: {{ $values.scrapeTimeout | default $.Values.podMonitor.defaults.scrapeTimeout }}
+    {{- end }}
+    {{- end }}
+{{- end }}

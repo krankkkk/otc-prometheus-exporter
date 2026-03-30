@@ -1,197 +1,228 @@
+# -- Override the chart name used in resource names
 nameOverride: ""
+# -- Override the full resource name (release-name + chart-name)
 fullnameOverride: ""
-
-# Override the deployment namespace
+# -- Override the deployment namespace (useful for multi-namespace setups)
 namespaceOverride: ""
 
+# -- Service account configuration
 serviceAccount:
-  # Specifies whether a service account should be created
+  # -- Create a dedicated service account
   create: true
-  # Annotations to add to the service account
-  annotations: { }
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
+  # -- Annotations to add to the service account (e.g. for IRSA/workload identity)
+  annotations: {}
+  # -- Use an existing service account instead of creating one
   name: ""
 
-service:
-  ports:
-    metrics:
-      port: 39100
-      targetPort: 39100
-      #These values are the default values, override them if necessary
-      # targetPort: 80
-      ## port name from above
-      # name: "http"
-      # protocol: TCP
-      # port: 80
-
+# -- Deployment configuration
 deployment:
-
-  # You shouldn't really increase this, since prometheus scrapes all pod's you will get duplicate data entries in prometheus, which in turn can break dashboards quite badly.
+  # -- Number of replicas. Keep at 1 — multiple replicas produce duplicate metrics
+  # which break dashboards and alerting.
   replicaCount: 1
 
   image:
+    # -- Container image repository
     repository: "ghcr.io/iits-consulting/otc-prometheus-exporter"
+    # -- Image pull policy
     pullPolicy: IfNotPresent
+    # -- Image tag (defaults to chart appVersion)
     tag: ""
 
-  imagePullSecrets: [ ]
+  # -- Image pull secrets for private registries
+  imagePullSecrets: []
 
-  podAnnotations: { }
+  # -- Additional pod annotations
+  podAnnotations: {}
 
+  # -- Pod-level security context
   podSecurityContext:
-    # fsGroup: 2000
+    runAsNonRoot: true
+    runAsUser: 65534
+    runAsGroup: 65534
+    seccompProfile:
+      type: RuntimeDefault
 
+  # -- Container-level security context
   securityContext:
-    # capabilities:
-    #   drop:
-    #   - ALL
-    # readOnlyRootFilesystem: true
-    # runAsNonRoot: true
-    # runAsUser: 1000
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
 
-  volumes: { }
-  volumeMounts: { }
+  # -- Additional volumes to mount into the pod
+  volumes: {}
+  # -- Additional volume mounts for the container
+  volumeMounts: {}
 
-  affinity: { }
+  # -- Pod affinity/anti-affinity rules
+  affinity: {}
 
+  # -- Container port configuration
   ports:
     metrics:
       targetPort: 39100
       port: 39100
 
+  # -- Health check configuration. All probes hit the /healthz endpoint.
   health:
     startupProbe:
-      path: "/metrics"
-      # initialDelaySeconds: # defaults to 5
-      # periodSeconds: # defaults to 20
-      # failureThreshold: # defaults to 3
+      path: "/healthz"
       port: 39100
     liveness:
-      path: "/metrics"
-      # initialDelaySeconds: # defaults to 5
-      # periodSeconds: # defaults to 20
-      # failureThreshold: # defaults to 3
+      path: "/healthz"
       port: 39100
     readiness:
-     path: "/metrics"
-     # initialDelaySeconds: # defaults to 5
-     # periodSeconds: # defaults to 20
-     # failureThreshold: # defaults to 3
-     port: 39100
+      path: "/healthz"
+      port: 39100
 
-  env: { }
-    # set the values as required as long envFromSecret is not used
-    # FETCH_RESOURCE_ID_TO_NAME: false
-    # WAITDURATION: 60
-    # REGION: "eu-de"
-    # PORT: 39100
-    # OS_USERNAME: "" # Comment this line out or remove if using AK/SK
-    # OS_PASSWORD: "" # Comment this line out or remove if using AK/SK
-    # OS_PROJECT_ID: "f0f45389d6a947d88c8658fb8e1a1053" # Example f0f45389d6a947d88c8658fb8e1aXXX
-    # OS_DOMAIN_NAME:  "OTC-EU-DE-00000000001000058635" # Example OTC-EU-DE-000000000010000....  # This will be ignored when using the AK/SK Auth
-    # OS_SECRET_KEY: "SK" 
-    # OS_ACCESS_KEY: "AK" 
-    # NAMESPACES: # If not set will fetch everything
+  # -- Environment variables for authentication and tuning.
+  # Credentials should be set via envFromSecret in production.
+  env:
+    # -- Authentication (required — pick one method)
+    # REGION: "eu-de"                # OTC region: "eu-de" or "eu-nl"
+    # OS_PROJECT_ID: ""              # OTC project ID (always required)
+    #
+    # Option A: Username/password
+    # OS_USERNAME: ""
+    # OS_PASSWORD: ""
+    # OS_DOMAIN_NAME: ""
+    #
+    # Option B: AK/SK
+    # OS_ACCESS_KEY: ""
+    # OS_SECRET_KEY: ""
+    #
+    # -- Optional
+    # OS_REGION_PROJECT_ID: ""       # For OBS metrics; auto-discovered with user/pass auth
+    #
+    # -- Tuning (defaults are usually fine)
+    REQUEST_TIMEOUT: "10"          # HTTP timeout in seconds for OTC API calls
+    IDLE_CONN_TIMEOUT: "90"        # How long idle HTTP connections stay in the pool (seconds)
+    CES_BATCH_SIZE: "500"          # Max metrics per CES batch API request
+    CES_LOOKBACK: "10"             # CES lookback window in minutes
+    AOM_BATCH_SIZE: "20"           # Max metrics per AOM data API request
+    AOM_CONCURRENCY: "5"           # Max concurrent AOM API calls per scrape
 
-  # set the secret-name for additionally sourced environment variables.
+  # -- Name of an existing Secret to source additional environment variables from.
+  # Use this for credentials instead of putting them in env directly.
   envFromSecret: ""
 
+  # -- Container resource requests and limits
   resources:
     requests:
-      cpu: 100m
+      cpu: 200m
       memory: 128Mi
     limits:
       memory: 128Mi
 
-serviceMonitor:
+# -- PodMonitor configuration for Prometheus Operator scraping.
+# Creates one scrape endpoint per enabled namespace, each passing ?namespace=SYS.XXX.
+podMonitor:
+  # -- Deploy the PodMonitor resource
   enabled: true
-  # Default values, override them if necessary
-  # labels: {}
-  #
-  # If you are using kube-prometheus-stack and did not configure the prometheus operator
-  # then you will want to use this label:
-  #
-  # labels:
-  #   release: kube-prom-stack
-  #
-  #
-  # annotations: {}
-  # portName: "metrics"
-  # interval: "10s"
-  # path: "/metrics" 
+  # -- Scrape the exporter's own metrics (go_*, process_*, otc_scrape_*, otc_http_*)
+  selfMonitoring: true
+  # -- Additional labels on the PodMonitor (e.g. for Prometheus selector matching)
+  labels: {}
+  # -- Additional annotations on the PodMonitor
+  annotations: {}
+  # -- Default scrape settings (can be overridden per namespace)
+  defaults:
+    interval: "30s"
+    scrapeTimeout: "15s"
 
+# -- Per-namespace target configuration.
+# Controls which OTC namespaces are scraped, and whether dashboards/alerts are deployed.
+targets:
+  # -- Defaults applied to every namespace (can be overridden per namespace)
+  defaults:
+    # -- Scrape this namespace
+    enabled: true
+
+    # -- Enrich CES metrics with human-readable names from service APIs and gather various additional data points.
+    enrich: true
+
+    # -- Deploy a Grafana dashboard ConfigMap. Set to false to skip.
+    dashboard: true
+
+    # -- Deploy PrometheusRule alerts. Set to true to enable, "name" to override filename.
+    # Only namespaces with a matching file in alerts/ will produce a resource. (Note: not all namespaces have pre-defines rules)
+    rules: false
+
+  # -- Namespace-specific overrides. Keys are CES namespace names (e.g. SYS.ECS).
+  # Names for dashboards and alerts are auto-derived: SYS.ECS -> ecs, SERVICE.BMS -> bms.
+  namespaces:
+    SYS.ECS:
+    SYS.RDS:
+      rules: true
+      dashboard: true
+    SYS.ELB:
+      rules: true
+    SYS.NAT:
+    SYS.VPC:
+    SYS.OBS:
+      rules: true
+    SYS.ALARM:
+      rules: true
+    SYS.DMS:
+      enabled: false
+    SYS.DCS:
+      enabled: false
+    SYS.DDS:
+      enabled: false
+    SYS.WAF:
+      enabled: false
+    SYS.CBR:
+      enabled: false
+    SYS.AS:
+      enabled: false
+    SYS.EVS:
+      enabled: false
+    SYS.SFS:
+      enabled: false
+    SYS.EFS:
+      enabled: false
+    SYS.DWS:
+      enabled: false
+    SYS.ES:
+      enabled: false
+      # -- CSS uses a non-standard dashboard name
+      dashboard: css
+    SYS.GAUSSDB:
+      enabled: false
+    SYS.GAUSSDBV5:
+      enabled: false
+    SYS.NoSQL:
+      enabled: false
+    SERVICE.BMS:
+      enabled: false
+    SYS.VPN:
+      enabled: false
+
+# -- Grafana dashboard ConfigMap generation.
+# Creates one ConfigMap per enabled namespace with grafana_dashboard: "1" label.
 dashboards:
-  as:
-    enabled: true
-  bms:
-    enabled: true
-  cbr:
-    enabled: true
-  css:
-    enabled: true
-  dcs:
-    enabled: true
-  dds:
-    enabled: true
-  dms:
-    enabled: true
-  dws:
-    enabled: true
-  ecs:
-    enabled: true
-  efs:
-    enabled: true
-  elb:
-    enabled: true
-  evs:
-    enabled: true
-  gaussdb:
-    enabled: true
-  gaussdbv5:
-    enabled: true
-  nat:
-    enabled: true
-  nosql:
-    enabled: true
-  rds-mysql:
-    enabled: true
-  rds-postgres:
-    enabled: true
-  rds-sqlserver:
-    enabled: true
-  sfs:
-    enabled: true
-  vpc:
-    enabled: true
-  waf:
-    enabled: true
+  # -- Deploy dashboard ConfigMaps
+  enabled: true
 
-# -- Default Prometheus Rules that should be deployed to the Kubernetes cluster
-defaultPrometheusRules:
-  # -- Enable default Prometheus Rules
+  # -- Deploy the exporter self-monitoring dashboard (HTTP traces, scrape durations)
+  selfMonitoring: true
+
+# -- PrometheusRule generation.
+# Creates one PrometheusRule per namespace that has rules enabled and a matching alerts/ file.
+prometheusRules:
+  # -- Deploy PrometheusRule resources
   enabled: false
-  # -- Specify which Prometheus Rules should be enabled
-  rules:
-    # -- Enable Relational Database Service rules (only PostgreSQL supported)
-    rds: true
-    # -- Enable Object Storage Service rules
-    obs: true
-    # -- Enable Elastic Load Balancing rules
-    elb: true
 
-# -- Additional Prometheus Rules that should be deployed to the Kubernetes cluster
+# -- Additional custom PrometheusRules (not tied to namespace files).
+# Each key becomes a separate PrometheusRule resource.
 additionalPrometheusRulesMap: {}
-  # # Prometheus rules for RDS PostgreSQL
-  # rds-postgresql-alerts:
+  # rds-custom-alerts:
   #   groups:
-  #     - name: postgresql-system
+  #     - name: custom-postgresql
   #       rules:
-  #         - alert: PostgreSQLHighCPUUtilization
-  #           annotations:
-  #             summary: '{{ $labels.instance }} CPU > 80%'
-  #             description: 'CPU utilization for PostgreSQL instance {{ $labels.instance }} has been above 80%. Current value: {{ $value }}%'
-  #           expr: >
-  #             rds_rds001_cpu_util > 0.8
+  #         - alert: PostgreSQLHighCPU
+  #           expr: rds_rds001_cpu_util > 80
+  #           for: 5m
   #           labels:
   #             severity: warning
