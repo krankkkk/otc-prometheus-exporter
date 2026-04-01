@@ -32,7 +32,7 @@ func metricsHandler(registry *provider.Registry, client *otcclient.Client, logge
 		prov, ok := registry.Get(namespace)
 		if !ok {
 			w.WriteHeader(http.StatusNotFound)
-			fmt.Fprintf(w, "unknown namespace %q\n", namespace)
+			_, _ = fmt.Fprintf(w, "unknown namespace %q\n", namespace)
 			return
 		}
 
@@ -59,7 +59,7 @@ func metricsHandler(registry *provider.Registry, client *otcclient.Client, logge
 				"duration", duration.String(),
 				"error", err.Error())
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(w, "collect error: %v\n", err)
+			_, _ = fmt.Fprintf(w, "collect error: %v\n", err)
 			return
 		}
 
@@ -118,5 +118,5 @@ func newTraceID() string {
 // healthzHandler returns a simple 200 "ok" response for liveness probes.
 func healthzHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "ok")
+	_, _ = fmt.Fprint(w, "ok")
 }

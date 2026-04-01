@@ -164,7 +164,7 @@ func TestValidateConfigRejectsPartialAKSK(t *testing.T) {
 
 func TestIamEndpoint(t *testing.T) {
 	got := iamEndpoint("eu-de")
-	want := "https://iam.eu-de.otc.t-systems.com:443/v3"
+	want := "https://iam.eu-de.otc.t-systems.com/v3"
 	if got != want {
 		t.Fatalf("iamEndpoint(eu-de) = %q, want %q", got, want)
 	}

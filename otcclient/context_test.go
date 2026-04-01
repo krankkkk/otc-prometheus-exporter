@@ -37,7 +37,8 @@ func TestContextTransportInjectsContext(t *testing.T) {
 }
 
 func TestContextTransportPreservesExistingContext(t *testing.T) {
-	transportCtx := context.WithValue(context.Background(), "transport", true)
+	type ctxKey string
+	transportCtx := context.WithValue(context.Background(), ctxKey("transport"), true)
 	requestCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 

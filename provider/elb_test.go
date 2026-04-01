@@ -91,8 +91,6 @@ func getLabelValue(m *dto.Metric, name string) string {
 	return ""
 }
 
-func float64Ptr(f float64) *float64 { return &f }
-
 func TestELBCacheIntegration(t *testing.T) {
 	cache := NewNameCache()
 	merged := map[string]string{

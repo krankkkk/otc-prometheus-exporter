@@ -31,7 +31,7 @@ func TestCollectWithEnrichmentShouldEnrichFalse(t *testing.T) {
 	if called {
 		t.Error("enrichFn should not be called when ShouldEnrich is false")
 	}
-	if families != nil && len(families) > 0 {
+	if len(families) > 0 {
 		t.Error("expected nil/empty families with nil client")
 	}
 	_ = err
