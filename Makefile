@@ -4,5 +4,5 @@ test:
 
 .PHONY: generate-dashboards-into-helm
 generate-dashboards-into-helm: 
-	go run cmd/grafanadashboards/main.go ./... --output-path ./charts/otc-prometheus-exporter/dashboards
+	go run ./cmd/grafanadashboards/ --output-path ./charts/otc-prometheus-exporter/dashboards
 			

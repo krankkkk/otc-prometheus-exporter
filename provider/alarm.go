@@ -114,20 +114,3 @@ func convertAlarmsToMetrics(alarms []cesAlarms.MetricAlarms) []*dto.MetricFamily
 	}
 }
 
-func (p *AlarmProvider) Dashboard() DashboardConfig {
-	return DashboardConfig{
-		Title: "ALARM - CES Alarms",
-		UID:   "otc-alarm",
-		Sections: []PanelSection{
-			{Title: "Overview", Panels: []PanelConfig{
-				{Metric: "otc_alarm_state", Title: "Firing Alarms", Unit: "short", Type: Stat,
-					Expr:   `count(otc_alarm_state == 1) or vector(0)`,
-					Legend: "firing",
-					Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 1, Color: "red"}}},
-			}},
-			{Title: "Alarm States", Panels: []PanelConfig{
-				{Metric: "otc_alarm_state", Title: "All Alarms", Unit: "short", Type: Table},
-			}},
-		},
-	}
-}

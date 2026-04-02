@@ -38,6 +38,16 @@ func (r *Registry) Get(namespace string) (MetricProvider, bool) {
 	return p, ok
 }
 
+// GetOrFallback returns the registered provider for the namespace.
+// If no provider is registered, it returns a GenericCESProvider that
+// forwards the namespace to the CES batch API.
+func (r *Registry) GetOrFallback(namespace string) MetricProvider {
+	if p, ok := r.providers[namespace]; ok {
+		return p
+	}
+	return &GenericCESProvider{namespace: namespace}
+}
+
 // Namespaces returns all registered namespace strings.
 func (r *Registry) Namespaces() []string {
 	ns := make([]string, 0, len(r.providers))

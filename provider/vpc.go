@@ -58,18 +58,3 @@ func convertVPCBandwidthsToMetrics(bandwidths []vpcBW.BandWidth) []*dto.MetricFa
 	return []*dto.MetricFamily{NewGaugeMetricFamily("vpc_bandwidth_size_mbit", metrics)}
 }
 
-func (p *VPCProvider) Dashboard() DashboardConfig {
-	return DashboardConfig{
-		Title: "VPC - Virtual Private Cloud",
-		UID:   "otc-vpc",
-		Sections: []PanelSection{
-			{Title: "Overview", Panels: []PanelConfig{
-				{Metric: "vpc_bandwidth_size_mbit", Title: "Bandwidth Size", Unit: "Mbits", Type: Stat},
-			}},
-			{Title: "Traffic", Panels: []PanelConfig{
-				{Metric: "vpc_upstream_bandwidth", Title: "Upstream", Unit: "bps", Type: TimeSeries},
-				{Metric: "vpc_downstream_bandwidth", Title: "Downstream", Unit: "bps", Type: TimeSeries},
-			}},
-		},
-	}
-}

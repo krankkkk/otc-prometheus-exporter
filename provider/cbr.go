@@ -71,16 +71,3 @@ func convertCBRBackupsToMetrics(backups []cbrBackups.Backup) []*dto.MetricFamily
 	}
 }
 
-func (p *CBRProvider) Dashboard() DashboardConfig {
-	return DashboardConfig{
-		Title: "CBR - Cloud Backup and Recovery",
-		UID:   "otc-cbr",
-		Sections: []PanelSection{
-			{Title: "Backups", Panels: []PanelConfig{
-				{Metric: "cbr_backup_status", Title: "Backup Status", Unit: "short", Type: Table,
-					Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 1, Color: "red"}}},
-				{Metric: "cbr_backup_size_gb", Title: "Backup Size", Unit: "decgbytes", Type: Table},
-			}},
-		},
-	}
-}

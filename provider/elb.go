@@ -146,25 +146,3 @@ func convertELBToMetrics(lbs []elbLB.LoadBalancer) []*dto.MetricFamily {
 	return []*dto.MetricFamily{NewGaugeMetricFamily("elb_loadbalancer_status", metrics)}
 }
 
-func (p *ELBProvider) Dashboard() DashboardConfig {
-	return DashboardConfig{
-		Title: "ELB - Elastic Load Balancer",
-		UID:   "otc-elb",
-		Sections: []PanelSection{
-			{Title: "Overview", Panels: []PanelConfig{
-				{Metric: "elb_loadbalancer_status", Title: "LB Status", Unit: "short", Type: Stat,
-					Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 1, Color: "red"}}},
-			}},
-			{Title: "Traffic", Panels: []PanelConfig{
-				{Metric: "elb_m1_cps", Title: "Connections/s", Unit: "cps", Type: TimeSeries},
-				{Metric: "elb_m22_in_bandwidth", Title: "Inbound Bandwidth", Unit: "Bps", Type: TimeSeries},
-				{Metric: "elb_m23_out_bandwidth", Title: "Outbound Bandwidth", Unit: "Bps", Type: TimeSeries},
-			}},
-			{Title: "Backend Health", Panels: []PanelConfig{
-				{Metric: "elb_ma_normal_servers", Title: "Healthy Backends", Unit: "short", Type: TimeSeries},
-				{Metric: "elb_m9_abnormal_servers", Title: "Unhealthy Backends", Unit: "short", Type: TimeSeries,
-					Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 1, Color: "red"}}},
-			}},
-		},
-	}
-}

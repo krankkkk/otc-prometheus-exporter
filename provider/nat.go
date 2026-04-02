@@ -65,29 +65,3 @@ func convertNATGatewaysToMetrics(gateways []natGW.NatGateway) []*dto.MetricFamil
 	return []*dto.MetricFamily{NewGaugeMetricFamily("nat_gateway_status", metrics)}
 }
 
-func (p *NATProvider) Dashboard() DashboardConfig {
-	return DashboardConfig{
-		Title: "NAT - NAT Gateway",
-		UID:   "otc-nat",
-		Sections: []PanelSection{
-			{Title: "Overview", Panels: []PanelConfig{
-				{Metric: "nat_gateway_status", Title: "Gateway Status", Unit: "short", Type: Stat,
-					Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 1, Color: "red"}}},
-				{Metric: "nat_snat_connection", Title: "SNAT Connections", Unit: "short", Type: TimeSeries},
-				{Metric: "nat_snat_connection_ratio", Title: "SNAT Connection Usage", Unit: "percent", Type: TimeSeries},
-			}},
-			{Title: "Bandwidth", Panels: []PanelConfig{
-				{Metric: "nat_inbound_bandwidth", Title: "Inbound Bandwidth", Unit: "bps", Type: TimeSeries},
-				{Metric: "nat_outbound_bandwidth", Title: "Outbound Bandwidth", Unit: "bps", Type: TimeSeries},
-				{Metric: "nat_inbound_bandwidth_ratio", Title: "Inbound Bandwidth Usage", Unit: "percent", Type: TimeSeries},
-				{Metric: "nat_outbound_bandwidth_ratio", Title: "Outbound Bandwidth Usage", Unit: "percent", Type: TimeSeries},
-			}},
-			{Title: "Packets & Traffic", Panels: []PanelConfig{
-				{Metric: "nat_inbound_pps", Title: "Inbound PPS", Unit: "pps", Type: TimeSeries},
-				{Metric: "nat_outbound_pps", Title: "Outbound PPS", Unit: "pps", Type: TimeSeries},
-				{Metric: "nat_inbound_traffic", Title: "Inbound Traffic", Unit: "bytes", Type: TimeSeries},
-				{Metric: "nat_outbound_traffic", Title: "Outbound Traffic", Unit: "bytes", Type: TimeSeries},
-			}},
-		},
-	}
-}

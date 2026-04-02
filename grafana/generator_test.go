@@ -2,29 +2,27 @@ package grafana
 
 import (
 	"testing"
-
-	"github.com/iits-consulting/otc-prometheus-exporter/provider"
 )
 
 func TestGenerateDashboard(t *testing.T) {
-	cfg := provider.DashboardConfig{
+	cfg := DashboardConfig{
 		Title: "Test Dashboard",
 		UID:   "test-uid",
-		Sections: []provider.PanelSection{
+		Sections: []PanelSection{
 			{
 				Title: "Overview",
-				Panels: []provider.PanelConfig{
-					{Metric: "test_status", Title: "Status", Unit: "short", Type: provider.Stat,
-						Thresholds: []provider.Threshold{{Value: 0, Color: "red"}, {Value: 1, Color: "green"}}},
+				Panels: []PanelConfig{
+					{Metric: "test_status", Title: "Status", Unit: "short", Type: Stat,
+						Thresholds: []Threshold{{Value: 0, Color: "red"}, {Value: 1, Color: "green"}}},
 				},
 			},
 			{
 				Title: "Performance",
-				Panels: []provider.PanelConfig{
-					{Metric: "test_cpu", Title: "CPU", Unit: "percent", Type: provider.TimeSeries,
-						Thresholds: []provider.Threshold{{Value: 0, Color: "green"}, {Value: 80, Color: "yellow"}, {Value: 90, Color: "red"}}},
-					{Metric: "test_mem", Title: "Memory", Unit: "percent", Type: provider.TimeSeries,
-						Thresholds: []provider.Threshold{{Value: 0, Color: "green"}, {Value: 80, Color: "red"}}},
+				Panels: []PanelConfig{
+					{Metric: "test_cpu", Title: "CPU", Unit: "percent", Type: TimeSeries,
+						Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 80, Color: "yellow"}, {Value: 90, Color: "red"}}},
+					{Metric: "test_mem", Title: "Memory", Unit: "percent", Type: TimeSeries,
+						Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 80, Color: "red"}}},
 				},
 			},
 		},
@@ -63,21 +61,21 @@ func TestGenerateDashboard(t *testing.T) {
 
 func TestPanelTypes(t *testing.T) {
 	tests := []struct {
-		panelType provider.PanelType
+		panelType PanelType
 		expected  string
 	}{
-		{provider.TimeSeries, "timeseries"},
-		{provider.Stat, "stat"},
-		{provider.Gauge, "gauge"},
-		{provider.Table, "table"},
+		{TimeSeries, "timeseries"},
+		{Stat, "stat"},
+		{Gauge, "gauge"},
+		{Table, "table"},
 	}
 
 	for _, tt := range tests {
-		cfg := provider.DashboardConfig{
+		cfg := DashboardConfig{
 			Title: "Test", UID: "test",
-			Sections: []provider.PanelSection{{
+			Sections: []PanelSection{{
 				Title: "Section",
-				Panels: []provider.PanelConfig{{
+				Panels: []PanelConfig{{
 					Metric: "m", Title: "T", Unit: "short", Type: tt.panelType,
 				}},
 			}},
@@ -94,13 +92,13 @@ func TestPanelTypes(t *testing.T) {
 
 func TestTablePanelsNonOverlapping(t *testing.T) {
 	// Two Table panels in the same section must get distinct y values.
-	cfg := provider.DashboardConfig{
+	cfg := DashboardConfig{
 		Title: "Test", UID: "test",
-		Sections: []provider.PanelSection{{
+		Sections: []PanelSection{{
 			Title: "Status",
-			Panels: []provider.PanelConfig{
-				{Metric: "svc_backup_status", Title: "Backup Status", Unit: "short", Type: provider.Table},
-				{Metric: "svc_backup_size", Title: "Backup Size", Unit: "decgbytes", Type: provider.Table},
+			Panels: []PanelConfig{
+				{Metric: "svc_backup_status", Title: "Backup Status", Unit: "short", Type: Table},
+				{Metric: "svc_backup_size", Title: "Backup Size", Unit: "decgbytes", Type: Table},
 			},
 		}},
 	}
@@ -138,14 +136,14 @@ func TestTablePanelsNonOverlapping(t *testing.T) {
 
 func TestMixedFullAndHalfWidthPanels(t *testing.T) {
 	// A Table panel followed by two half-width panels must not overlap.
-	cfg := provider.DashboardConfig{
+	cfg := DashboardConfig{
 		Title: "Test", UID: "test",
-		Sections: []provider.PanelSection{{
+		Sections: []PanelSection{{
 			Title: "Mixed",
-			Panels: []provider.PanelConfig{
-				{Metric: "svc_status", Title: "Status", Unit: "short", Type: provider.Table},
-				{Metric: "svc_cpu", Title: "CPU", Unit: "percent", Type: provider.TimeSeries},
-				{Metric: "svc_mem", Title: "Memory", Unit: "percent", Type: provider.TimeSeries},
+			Panels: []PanelConfig{
+				{Metric: "svc_status", Title: "Status", Unit: "short", Type: Table},
+				{Metric: "svc_cpu", Title: "CPU", Unit: "percent", Type: TimeSeries},
+				{Metric: "svc_mem", Title: "Memory", Unit: "percent", Type: TimeSeries},
 			},
 		}},
 	}
@@ -183,13 +181,13 @@ func TestMixedFullAndHalfWidthPanels(t *testing.T) {
 }
 
 func TestThresholdsConverted(t *testing.T) {
-	cfg := provider.DashboardConfig{
+	cfg := DashboardConfig{
 		Title: "Test", UID: "test",
-		Sections: []provider.PanelSection{{
+		Sections: []PanelSection{{
 			Title: "S",
-			Panels: []provider.PanelConfig{{
-				Metric: "m", Title: "T", Unit: "percent", Type: provider.TimeSeries,
-				Thresholds: []provider.Threshold{
+			Panels: []PanelConfig{{
+				Metric: "m", Title: "T", Unit: "percent", Type: TimeSeries,
+				Thresholds: []Threshold{
 					{Value: 0, Color: "green"},
 					{Value: 80, Color: "yellow"},
 					{Value: 90, Color: "red"},

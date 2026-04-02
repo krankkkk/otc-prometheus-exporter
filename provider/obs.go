@@ -27,24 +27,3 @@ func (p *OBSProvider) Collect(ctx context.Context, client *otcclient.Client) ([]
 	return families, nil
 }
 
-func (p *OBSProvider) Dashboard() DashboardConfig {
-	return DashboardConfig{
-		Title: "OBS - Object Storage Service",
-		UID:   "otc-obs",
-		Sections: []PanelSection{
-			{Title: "Requests", Panels: []PanelConfig{
-				{Metric: "obs_request_count_get_per_second", Title: "GET Requests/s", Unit: "reqps", Type: TimeSeries},
-				{Metric: "obs_request_count_put_per_second", Title: "PUT Requests/s", Unit: "reqps", Type: TimeSeries},
-				{Metric: "obs_request_count_monitor_2xx", Title: "2xx Responses", Unit: "short", Type: TimeSeries},
-				{Metric: "obs_request_count_monitor_4xx", Title: "4xx Responses", Unit: "short", Type: TimeSeries,
-					Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 1, Color: "yellow"}}},
-				{Metric: "obs_request_count_monitor_5xx", Title: "5xx Responses", Unit: "short", Type: TimeSeries,
-					Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 1, Color: "red"}}},
-			}},
-			{Title: "Latency", Panels: []PanelConfig{
-				{Metric: "obs_request_size_le_1mb_latency_p95", Title: "Latency p95 (<1MB)", Unit: "ms", Type: TimeSeries,
-					Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 100, Color: "yellow"}, {Value: 500, Color: "red"}}},
-			}},
-		},
-	}
-}

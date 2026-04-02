@@ -92,19 +92,3 @@ func convertDDSInstancesToMetrics(instances []ddsInst.InstanceResponse) []*dto.M
 	}
 }
 
-func (p *DDSProvider) Dashboard() DashboardConfig {
-	return DashboardConfig{
-		Title: "DDS - Document Database Service",
-		UID:   "otc-dds",
-		Sections: []PanelSection{
-			{Title: "Overview", Panels: []PanelConfig{
-				{Metric: "dds_instance_status", Title: "Instance Status", Unit: "short", Type: Stat,
-					Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 1, Color: "red"}}},
-			}},
-			{Title: "Node Status", Panels: []PanelConfig{
-				{Metric: "dds_node_status", Title: "Node Status", Unit: "short", Type: Table,
-					Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 1, Color: "red"}}},
-			}},
-		},
-	}
-}

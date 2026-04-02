@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -29,12 +30,7 @@ func metricsHandler(registry *provider.Registry, client *otcclient.Client, logge
 			return
 		}
 
-		prov, ok := registry.Get(namespace)
-		if !ok {
-			w.WriteHeader(http.StatusNotFound)
-			_, _ = fmt.Fprintf(w, "unknown namespace %q\n", namespace)
-			return
-		}
+		prov := registry.GetOrFallback(namespace)
 
 		scrapeLog := logger.WithFields("trace", newTraceID(), "namespace", namespace)
 
@@ -55,6 +51,15 @@ func metricsHandler(registry *provider.Registry, client *otcclient.Client, logge
 
 		if err != nil {
 			scrapeDuration.WithLabelValues(namespace, "false").Observe(duration.Seconds())
+			var notFound *provider.ErrNamespaceNotFound
+			if errors.As(err, &notFound) {
+				scrapeLog.Warn("unknown namespace",
+					"duration", duration.String(),
+					"error", err.Error())
+				w.WriteHeader(http.StatusNotFound)
+				_, _ = fmt.Fprintf(w, "unknown namespace %q\n", namespace)
+				return
+			}
 			scrapeLog.Error("collect failed",
 				"duration", duration.String(),
 				"error", err.Error())

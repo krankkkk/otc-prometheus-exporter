@@ -71,16 +71,3 @@ func convertDCSInstancesToMetrics(instances []dcsLifecycle.Instance) []*dto.Metr
 	}
 }
 
-func (p *DCSProvider) Dashboard() DashboardConfig {
-	return DashboardConfig{
-		Title: "DCS - Distributed Cache Service",
-		UID:   "otc-dcs",
-		Sections: []PanelSection{
-			{Title: "Overview", Panels: []PanelConfig{
-				{Metric: "dcs_instance_status", Title: "Instance Status", Unit: "short", Type: Stat,
-					Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 1, Color: "red"}}},
-				{Metric: "dcs_instance_capacity_mb", Title: "Capacity", Unit: "decmbytes", Type: Gauge},
-			}},
-		},
-	}
-}

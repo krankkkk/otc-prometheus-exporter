@@ -2,12 +2,10 @@ package grafana
 
 import (
 	"strings"
-
-	"github.com/iits-consulting/otc-prometheus-exporter/provider"
 )
 
-// GenerateDashboard converts a provider's DashboardConfig into a Grafana dashboard struct.
-func GenerateDashboard(cfg provider.DashboardConfig) Dashboard {
+// GenerateDashboard converts a DashboardConfig into a Grafana dashboard struct.
+func GenerateDashboard(cfg DashboardConfig) Dashboard {
 	board := NewDefaultDashboard(cfg.Title, cfg.UID)
 
 	// Add resource_name variable scoped to all metrics for this namespace.
@@ -50,10 +48,10 @@ func GenerateDashboard(cfg provider.DashboardConfig) Dashboard {
 		for _, pc := range section.Panels {
 			w := 12
 			h := 8
-			if pc.Type == provider.Stat || pc.Type == provider.Gauge {
+			if pc.Type == Stat || pc.Type == Gauge {
 				h = 4
 			}
-			if pc.Type == provider.Table {
+			if pc.Type == Table {
 				// Full-width: flush any open half-width row first
 				if col > 0 {
 					panelY += rowH
@@ -92,7 +90,7 @@ func GenerateDashboard(cfg provider.DashboardConfig) Dashboard {
 
 // metricPrefix extracts the namespace prefix from the first metric name.
 // e.g., "ecs_instance_status" -> "ecs_", "obs_request_count_get_per_second" -> "obs_"
-func metricPrefix(cfg provider.DashboardConfig) string {
+func metricPrefix(cfg DashboardConfig) string {
 	for _, s := range cfg.Sections {
 		for _, p := range s.Panels {
 			if p.Metric != "" {
@@ -115,7 +113,7 @@ func newRowPanel(title string, id, y int) Panel {
 	}
 }
 
-func newMetricPanel(pc provider.PanelConfig, id, x, y, w, h int) Panel {
+func newMetricPanel(pc PanelConfig, id, x, y, w, h int) Panel {
 	return Panel{
 		Datasource: Datasource{Type: "prometheus", UID: "${datasource}"},
 		FieldConfig: FieldConfig{
@@ -142,9 +140,9 @@ func newMetricPanel(pc provider.PanelConfig, id, x, y, w, h int) Panel {
 			EditorMode:          "builder",
 			Expr:                panelExpr(pc),
 			IncludeNullMetadata: true,
-			Instant:             pc.Type == provider.Stat || pc.Type == provider.Table,
+			Instant:             pc.Type == Stat || pc.Type == Table,
 			LegendFormat:        legendFormat(pc),
-			Range:               pc.Type == provider.TimeSeries || pc.Type == provider.Gauge,
+			Range:               pc.Type == TimeSeries || pc.Type == Gauge,
 			RefID:               "A",
 		}},
 		Title: pc.Title,
@@ -152,36 +150,36 @@ func newMetricPanel(pc provider.PanelConfig, id, x, y, w, h int) Panel {
 	}
 }
 
-func panelExpr(pc provider.PanelConfig) string {
+func panelExpr(pc PanelConfig) string {
 	if pc.Expr != "" {
 		return pc.Expr
 	}
 	return pc.Metric + `{resource_name=~"$resource_name"}`
 }
 
-func legendFormat(pc provider.PanelConfig) string {
+func legendFormat(pc PanelConfig) string {
 	if pc.Legend != "" {
 		return pc.Legend
 	}
 	return "{{resource_name}}"
 }
 
-func panelTypeString(pt provider.PanelType) string {
+func panelTypeString(pt PanelType) string {
 	switch pt {
-	case provider.TimeSeries:
+	case TimeSeries:
 		return "timeseries"
-	case provider.Stat:
+	case Stat:
 		return "stat"
-	case provider.Gauge:
+	case Gauge:
 		return "gauge"
-	case provider.Table:
+	case Table:
 		return "table"
 	default:
 		return "timeseries"
 	}
 }
 
-func convertThresholds(thresholds []provider.Threshold) []Steps {
+func convertThresholds(thresholds []Threshold) []Steps {
 	if len(thresholds) == 0 {
 		return []Steps{{Color: "green", Value: nil}}
 	}

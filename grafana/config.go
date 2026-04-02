@@ -1,21 +1,19 @@
-package provider
+package grafana
 
-// DashboardProvider is implemented by providers that want a Grafana dashboard generated.
-type DashboardProvider interface {
-	Dashboard() DashboardConfig
-}
-
+// DashboardConfig describes a Grafana dashboard to generate.
 type DashboardConfig struct {
 	Title    string
 	UID      string
 	Sections []PanelSection
 }
 
+// PanelSection groups related panels under a collapsible row.
 type PanelSection struct {
 	Title  string
 	Panels []PanelConfig
 }
 
+// PanelConfig describes a single Grafana panel.
 type PanelConfig struct {
 	Metric     string
 	Title      string
@@ -26,6 +24,7 @@ type PanelConfig struct {
 	Expr       string // Override PromQL expression (default: Metric{resource_name=~"$resource_name"})
 }
 
+// PanelType selects the Grafana visualization type.
 type PanelType int
 
 const (
@@ -35,6 +34,7 @@ const (
 	Table
 )
 
+// Threshold defines a color step for Grafana panel thresholds.
 type Threshold struct {
 	Value float64
 	Color string

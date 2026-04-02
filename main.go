@@ -16,8 +16,6 @@ import (
 
 // registerAllProviders registers all metric providers with the given registry.
 func registerAllProviders(registry *provider.Registry) {
-	registry.Register(&provider.WAFProvider{})
-	registry.Register(&provider.BMSProvider{})
 	registry.Register(&provider.ECSProvider{})
 	registry.Register(&provider.RDSProvider{})
 	registry.Register(&provider.ELBProvider{})
@@ -27,17 +25,8 @@ func registerAllProviders(registry *provider.Registry) {
 	registry.Register(&provider.DDSProvider{})
 	registry.Register(&provider.VPCProvider{})
 	registry.Register(&provider.OBSProvider{})
-	registry.Register(&provider.EVSProvider{})
 	registry.Register(&provider.CBRProvider{})
 	registry.Register(&provider.ASProvider{})
-	registry.Register(&provider.SFSProvider{})
-	registry.Register(&provider.EFSProvider{})
-	registry.Register(&provider.DWSProvider{})
-	registry.Register(&provider.CSSProvider{})
-	registry.Register(&provider.GaussDBProvider{})
-	registry.Register(&provider.GaussDBV5Provider{})
-	registry.Register(&provider.NoSQLProvider{})
-	registry.Register(&provider.VPNProvider{})
 	registry.Register(&provider.AlarmProvider{})
 }
 

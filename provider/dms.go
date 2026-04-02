@@ -76,16 +76,3 @@ func convertDMSInstancesToMetrics(instances []dmsInstances.Instance) []*dto.Metr
 	}
 }
 
-func (p *DMSProvider) Dashboard() DashboardConfig {
-	return DashboardConfig{
-		Title: "DMS - Distributed Message Service",
-		UID:   "otc-dms",
-		Sections: []PanelSection{
-			{Title: "Overview", Panels: []PanelConfig{
-				{Metric: "dms_instance_storage_used_gb", Title: "Storage Used", Unit: "decgbytes", Type: Gauge},
-				{Metric: "dms_instance_storage_total_gb", Title: "Storage Total", Unit: "decgbytes", Type: Stat},
-				{Metric: "dms_instance_partitions", Title: "Partitions", Unit: "short", Type: Stat},
-			}},
-		},
-	}
-}

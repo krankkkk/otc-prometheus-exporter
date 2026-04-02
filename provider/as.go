@@ -82,21 +82,3 @@ func convertASGroupsToMetrics(groups []asGroups.Group) []*dto.MetricFamily {
 	}
 }
 
-func (p *ASProvider) Dashboard() DashboardConfig {
-	return DashboardConfig{
-		Title: "AS - Auto Scaling",
-		UID:   "otc-as",
-		Sections: []PanelSection{
-			{Title: "Overview", Panels: []PanelConfig{
-				{Metric: "as_group_status", Title: "Group Status", Unit: "short", Type: Stat,
-					Thresholds: []Threshold{{Value: 0, Color: "green"}, {Value: 1, Color: "red"}}},
-			}},
-			{Title: "Scaling", Panels: []PanelConfig{
-				{Metric: "as_group_actual_instances", Title: "Actual Instances", Unit: "short", Type: TimeSeries},
-				{Metric: "as_group_desired_instances", Title: "Desired Instances", Unit: "short", Type: TimeSeries},
-				{Metric: "as_group_min_instances", Title: "Min Instances", Unit: "short", Type: TimeSeries},
-				{Metric: "as_group_max_instances", Title: "Max Instances", Unit: "short", Type: TimeSeries},
-			}},
-		},
-	}
-}
