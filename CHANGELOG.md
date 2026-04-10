@@ -12,26 +12,26 @@ The old exporter ran a background loop that fetched all namespaces on a fixed in
 
 #### Removed environment variables
 
-| Removed | Replacement |
-|---|---|
-| `NAMESPACES` | No longer needed — Prometheus scrape config controls which namespaces are fetched |
-| `WAITDURATION` | No longer needed — Prometheus scrape interval controls fetch frequency |
-| `FETCH_RESOURCE_ID_TO_NAME` | Replaced by `?enrich=false` query parameter (default: enrichment enabled) |
+| Removed                     | Replacement                                                                       |
+|-----------------------------|-----------------------------------------------------------------------------------|
+| `NAMESPACES`                | No longer needed — Prometheus scrape config controls which namespaces are fetched |
+| `WAITDURATION`              | No longer needed — Prometheus scrape interval controls fetch frequency            |
+| `FETCH_RESOURCE_ID_TO_NAME` | Replaced by `?enrich=false` query parameter (default: enrichment enabled)         |
 
 #### New / renamed environment variables
 
-| Variable | Default | Description |
-|---|---|---|
-| `REGION` | `eu-de` | **New.** OTC region (`eu-de` or `eu-nl`) |
+| Variable               | Default         | Description                                                                                      |
+|------------------------|-----------------|--------------------------------------------------------------------------------------------------|
+| `REGION`               | `eu-de`         | **New.** OTC region (`eu-de` or `eu-nl`)                                                         |
 | `OS_REGION_PROJECT_ID` | auto-discovered | **New.** Region-level project ID for global services (OBS). Auto-discovered with user/pass auth. |
-| `REQUEST_TIMEOUT` | `10` | **New.** HTTP timeout in seconds for OTC API calls |
-| `IDLE_CONN_TIMEOUT` | `90` | **New.** Idle HTTP connection pool timeout in seconds |
-| `COLLECT_TIMEOUT` | `55` | **New.** Max collect time per scrape in seconds |
-| `CES_BATCH_SIZE` | `500` | **New.** Max metrics per CES batch API request |
-| `CES_LOOKBACK` | `10` | **New.** CES lookback window in minutes |
-| `AOM_BATCH_SIZE` | `20` | **New.** Max metrics per AOM data API request |
-| `AOM_CONCURRENCY` | `5` | **New.** Max concurrent AOM API calls per scrape |
-| `LOG_LEVEL` | `INFO` | **New.** Log level (DEBUG, INFO, WARN, ERROR) |
+| `REQUEST_TIMEOUT`      | `10`            | **New.** HTTP timeout in seconds for OTC API calls                                               |
+| `IDLE_CONN_TIMEOUT`    | `90`            | **New.** Idle HTTP connection pool timeout in seconds                                            |
+| `COLLECT_TIMEOUT`      | `55`            | **New.** Max collect time per scrape in seconds                                                  |
+| `CES_BATCH_SIZE`       | `500`           | **New.** Max metrics per CES batch API request                                                   |
+| `CES_LOOKBACK`         | `10`            | **New.** CES lookback window in minutes                                                          |
+| `AOM_BATCH_SIZE`       | `20`            | **New.** Max metrics per AOM data API request                                                    |
+| `AOM_CONCURRENCY`      | `5`             | **New.** Max concurrent AOM API calls per scrape                                                 |
+| `LOG_LEVEL`            | `INFO`          | **New.** Log level (DEBUG, INFO, WARN, ERROR)                                                    |
 
 #### Helm chart: ServiceMonitor → PodMonitor
 
@@ -41,15 +41,24 @@ The chart no longer creates a `Service` + `ServiceMonitor`. It now uses a **PodM
 
 The values.yaml structure changed significantly:
 
-| Old | New |
-|---|---|
-| `service` | Removed — no Service resource created |
-| `serviceMonitor` | `podMonitor` (with `selfMonitoring` toggle) |
-| `serviceMonitor.namespaces` | `targets.namespaces` (unified config for scraping, dashboards, and alerts) |
-| `prometheusRules.rules.rds` | `targets.namespaces.SYS.RDS.rules: true` (per-namespace) |
-| `prometheusRules.rules.elb` | `targets.namespaces.SYS.ELB.rules: true` (per-namespace) |
-| `prometheusRules.rules.obs` | `targets.namespaces.SYS.OBS.rules: true` (per-namespace) |
-| `prometheusRules.rules.alarm` | `targets.namespaces.SYS.ALARM.rules: true` (per-namespace) |
+| Old                           | New                                                                        |
+|-------------------------------|----------------------------------------------------------------------------|
+| `service`                     | Removed — no Service resource created                                      |
+| `serviceMonitor`              | `podMonitor` (with `selfMonitoring` toggle)                                |
+| `serviceMonitor.namespaces`   | `targets.namespaces` (unified config for scraping, dashboards, and alerts) |
+| `prometheusRules.rules.rds`   | `targets.namespaces.SYS.RDS.rules: true` (per-namespace)                   |
+| `prometheusRules.rules.elb`   | `targets.namespaces.SYS.ELB.rules: true` (per-namespace)                   |
+| `prometheusRules.rules.obs`   | `targets.namespaces.SYS.OBS.rules: true` (per-namespace)                   |
+| `prometheusRules.rules.alarm` | `targets.namespaces.SYS.ALARM.rules: true` (per-namespace)                 |
+
+Similarly, the path for dashboards toggles changed:
+
+| Old                                     | New                                              |
+|-----------------------------------------|--------------------------------------------------|
+| `dashboards.ecs.enabled`                | `targets.namespaces.SYS.ECS.dashboard: true`     |
+| `dashboards.rds-mysql.enabled`          | `targets.namespaces.SYS.RDS.dashboard: true`     |
+| `dashboards.elb.enabled`                | `targets.namespaces.SYS.ELB.dashboard: true`     |
+| (all other `dashboards.<name>.enabled`) | `targets.namespaces.<NAMESPACE>.dashboard: true` |
 
 #### Metric names changed
 

@@ -52,6 +52,9 @@ tests:
       - lengthEqual:
           path: spec.podMetricsEndpoints
           count: 1
+      - equal:
+          path: spec.podMetricsEndpoints[0].params.namespace[0]
+          value: SYS.ECS
 
   - it: respects namespaceOverride
     set:

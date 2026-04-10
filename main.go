@@ -108,7 +108,10 @@ func main() {
 					return fmt.Errorf("region project: %w", err)
 				}
 			} else {
-				client.DiscoverRegionProjectID()
+				err := client.DiscoverRegionProjectID()
+				if err != nil {
+					return err
+				}
 			}
 
 			provider.Config.CESBatchSize = cesBatchSize

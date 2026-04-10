@@ -99,26 +99,20 @@ func (c *Client) SetRegionProjectID(id string) error {
 // DiscoverRegionProjectID queries the IAM API to find the region-level
 // project for the configured region. Global services like OBS require
 // this project scope instead of a specific subproject.
-func (c *Client) DiscoverRegionProjectID() {
+func (c *Client) DiscoverRegionProjectID() error {
 	identityClient, err := openstack.NewIdentityV3(c.provider, golangsdk.EndpointOpts{})
 	if err != nil {
-		c.Logger.Warn("failed to create identity client for region project discovery",
-			"error", err.Error())
-		return
+		return fmt.Errorf("failed to create identity client for region project discovery: %w", err)
 	}
 
 	pages, err := projects.List(identityClient, projects.ListOpts{}).AllPages()
 	if err != nil {
-		c.Logger.Warn("failed to list projects for region project discovery",
-			"error", err.Error())
-		return
+		return fmt.Errorf("failed to list projects for region project discovery: %w", err)
 	}
 
 	allProjects, err := projects.ExtractProjects(pages)
 	if err != nil {
-		c.Logger.Warn("failed to extract projects for region project discovery",
-			"error", err.Error())
-		return
+		return fmt.Errorf("failed to extract projects for region project discovery: %w", err)
 	}
 
 	projectNames := make([]string, len(allProjects))
@@ -131,12 +125,11 @@ func (c *Client) DiscoverRegionProjectID() {
 	for _, p := range allProjects {
 		if p.Name == c.Region {
 			c.authenticateRegionProject(p.Name, p.ID)
-			return
+			return nil
 		}
 	}
 
-	c.Logger.Warn("region-level project not found, global services like OBS may not work",
-		"region", c.Region, "available_projects", projectNames)
+	return fmt.Errorf("region-level project not found, global services like OBS may not work")
 }
 
 func (c *Client) authenticateRegionProject(name, id string) {
