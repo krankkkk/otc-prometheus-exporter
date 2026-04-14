@@ -3,99 +3,46 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/iits-consulting/otc-prometheus-exporter/grafana"
-	"github.com/iits-consulting/otc-prometheus-exporter/otcdoc"
 	"github.com/spf13/cobra"
 )
 
-func processDocumentationPages(outputPath string) {
-	_, err := os.Stat(outputPath)
-	if os.IsNotExist(err) {
-		err := os.MkdirAll(outputPath, 0700)
-		if err != nil {
-			log.Fatalf("Could not create missing output directory %s because of %s\n", outputPath, err)
-		}
-	}
-
-	for _, ds := range otcdoc.DocumentationSources {
-		resp, err := http.Get(ds.Url)
-		if err != nil {
-			log.Fatalf("Could not fetch the OTC documentation page for %s on %s because of %s\n", ds.Namespace, ds.Url, err)
-		}
-		defer func() {
-			err := resp.Body.Close()
-			log.Fatalf("Could not close the response body of %s because of %s\n", ds.Url, err)
-		}()
-
-		htmlBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Fatalf("Could not read the OTC documentation page for %s because of %s\n", ds.Namespace, err)
-		}
-
-		docpage, err := otcdoc.ParseDocumentationPageFromHtmlBytes(htmlBytes, ds.Namespace)
-		if err != nil {
-			log.Fatalf("Could not parse the HTML from the OTC documentation page for %s because of %s\n", ds.Namespace, err)
-		}
-
-		dashboadTitle := grafana.OtcSouceDescToGraranaDashboardTitle(ds)
-		dashboardUid := grafana.OtcSourceDescToGrafanaUID(ds)
-		board := grafana.NewDefaultDashboard(dashboadTitle, dashboardUid)
-		numberColumns := 2
-		for i, m := range docpage.Metrics {
-			width := 12
-			height := 15
-			x := (i % numberColumns) * width
-			y := (i / numberColumns) * width
-
-			s := grafana.PanelSettings{
-				Expr:   fmt.Sprintf("%s_%s", ds.Namespace, m.MetricId),
-				Title:  m.MetricName,
-				Id:     i,
-				X:      x,
-				Y:      y,
-				Width:  width,
-				Height: height,
-				Unit:   grafana.ConvertOtcMetricToGrafana(m.Unit),
-			}
-			board.Panels = append(board.Panels, grafana.NewPanelWithSettings(s))
-
-		}
-
-		b, err := json.Marshal(board)
-		if err != nil {
-			log.Fatalf("Could not save the generated dashboard for %s because of %s\n", ds.Namespace, err)
-		}
-
-		outputFile := path.Join(outputPath, grafana.OtcSourceDescToFilename(ds))
-		fmt.Println(outputFile)
-		err = os.WriteFile(outputFile, b, 0644)
-		if err != nil {
-			log.Fatalf("Could not write the generated dashboard to %s because of %s", ds.Namespace, err)
-		}
-	}
-}
-
 func main() {
-
 	var outputPath string
 	var rootCmd = &cobra.Command{
 		Use:   "grafanadashboards",
-		Short: "Generates Grafana dashboards for the OTC prometheus exporter.",
+		Short: "Generates Grafana dashboards from provider dashboard metadata.",
 		Run: func(cmd *cobra.Command, args []string) {
-			processDocumentationPages(outputPath)
+			if err := os.MkdirAll(outputPath, 0755); err != nil {
+				log.Fatalf("Could not create output directory %s: %v\n", outputPath, err)
+			}
+
+			for _, cfg := range allDashboardConfigs() {
+				board := grafana.GenerateDashboard(cfg)
+
+				b, err := json.MarshalIndent(board, "", "  ")
+				if err != nil {
+					log.Fatalf("Could not marshal dashboard %s: %v\n", cfg.Title, err)
+				}
+
+				filename := strings.ToLower(strings.ReplaceAll(cfg.UID, "otc-", "")) + ".json"
+				outputFile := path.Join(outputPath, filename)
+				if err := os.WriteFile(outputFile, b, 0644); err != nil {
+					log.Fatalf("Could not write %s: %v\n", outputFile, err)
+				}
+				fmt.Printf("Generated %s\n", outputFile)
+			}
 		},
 	}
-	rootCmd.Flags().StringVar(&outputPath, "output-path", "", "Directory where all the dashboards will be written to.")
-	rootCmd.MarkFlagRequired("output-path") //nolint:errcheck // will not err because only this one flag is used
+	rootCmd.Flags().StringVar(&outputPath, "output-path", "", "Directory for generated dashboards.")
+	rootCmd.MarkFlagRequired("output-path") //nolint:errcheck
 
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatalln(err)
 	}
-
 }

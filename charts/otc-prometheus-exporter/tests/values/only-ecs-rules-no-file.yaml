@@ -1,0 +1,56 @@
+# Only ECS with rules enabled — but ECS has no alerts/ file, so nothing renders.
+prometheusRules:
+  enabled: true
+targets:
+  defaults:
+    enabled: false
+    rules: false
+    dashboard: false
+  namespaces:
+    SYS.ECS:
+      enabled: true
+      rules: true
+    SYS.RDS:
+      enabled: false
+    SYS.ELB:
+      enabled: false
+    SYS.NAT:
+      enabled: false
+    SYS.VPC:
+      enabled: false
+    SYS.OBS:
+      enabled: false
+    SYS.ALARM:
+      enabled: false
+    SYS.DMS:
+      enabled: false
+    SYS.DCS:
+      enabled: false
+    SYS.DDS:
+      enabled: false
+    SYS.WAF:
+      enabled: false
+    SYS.CBR:
+      enabled: false
+    SYS.AS:
+      enabled: false
+    SYS.EVS:
+      enabled: false
+    SYS.SFS:
+      enabled: false
+    SYS.EFS:
+      enabled: false
+    SYS.DWS:
+      enabled: false
+    SYS.ES:
+      enabled: false
+    SYS.GAUSSDB:
+      enabled: false
+    SYS.GAUSSDBV5:
+      enabled: false
+    SYS.NoSQL:
+      enabled: false
+    SERVICE.BMS:
+      enabled: false
+    SYS.VPN:
+      enabled: false

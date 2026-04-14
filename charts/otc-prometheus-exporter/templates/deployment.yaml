@@ -3,6 +3,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ include "otc-prometheus-exporter.fullname" $ }}
+  namespace: {{ template "otc-prometheus-exporter.namespace" $ }}
   labels:
     {{- include "otc-prometheus-exporter.labels" $ | nindent 4 }}
 spec:

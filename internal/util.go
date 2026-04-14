@@ -2,15 +2,7 @@ package internal
 
 import (
 	"errors"
-	"strings"
 )
-
-func WithPrefixIfNotPresent(s, p string) string {
-	if strings.HasPrefix(s, p) {
-		return s
-	}
-	return p + s
-}
 
 // A slice window provides an iterator over a slice in form of windows of fixed width
 // It is intended to be created by the NewSliceWindow function.

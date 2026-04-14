@@ -1,0 +1,61 @@
+# ECS with custom interval/timeout overriding podMonitor defaults.
+podMonitor:
+  enabled: true
+  selfMonitoring: false
+  defaults:
+    interval: "30s"
+    scrapeTimeout: "15s"
+targets:
+  defaults:
+    enabled: false
+    dashboard: false
+    rules: false
+  namespaces:
+    SYS.ECS:
+      enabled: true
+      interval: "60s"
+      scrapeTimeout: "25s"
+    SYS.RDS:
+      enabled: false
+    SYS.ELB:
+      enabled: false
+    SYS.NAT:
+      enabled: false
+    SYS.VPC:
+      enabled: false
+    SYS.OBS:
+      enabled: false
+    SYS.ALARM:
+      enabled: false
+    SYS.DMS:
+      enabled: false
+    SYS.DCS:
+      enabled: false
+    SYS.DDS:
+      enabled: false
+    SYS.WAF:
+      enabled: false
+    SYS.CBR:
+      enabled: false
+    SYS.AS:
+      enabled: false
+    SYS.EVS:
+      enabled: false
+    SYS.SFS:
+      enabled: false
+    SYS.EFS:
+      enabled: false
+    SYS.DWS:
+      enabled: false
+    SYS.ES:
+      enabled: false
+    SYS.GAUSSDB:
+      enabled: false
+    SYS.GAUSSDBV5:
+      enabled: false
+    SYS.NoSQL:
+      enabled: false
+    SERVICE.BMS:
+      enabled: false
+    SYS.VPN:
+      enabled: false

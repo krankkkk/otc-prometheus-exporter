@@ -1,0 +1,21 @@
+groups:
+  - name: ces-alarms
+    rules:
+    - alert: OTCAlarmFiring
+      annotations:
+        summary: 'OTC alarm "{{ $labels.alarm_name }}" is firing'
+        description: 'Cloud Eye alarm "{{ $labels.alarm_name }}" ({{ $labels.severity }}) on {{ $labels.namespace }}/{{ $labels.metric_name }} is in alarm state.'
+      expr: |
+        otc_alarm_state == 1
+      for: 1m
+      labels:
+        severity: '{{ $labels.severity }}'
+    - alert: OTCAlarmInsufficientData
+      annotations:
+        summary: 'OTC alarm "{{ $labels.alarm_name }}" has insufficient data'
+        description: 'Cloud Eye alarm "{{ $labels.alarm_name }}" on {{ $labels.namespace }}/{{ $labels.metric_name }} cannot evaluate — data is missing.'
+      expr: |
+        otc_alarm_state == 2
+      for: 5m
+      labels:
+        severity: warning

@@ -1,11 +1,15 @@
 # Grafana Dashboard Generator
 
-This is a utility script for generating Grafana Dashboards from the Open Telekom Cloud documentation.
+Generates Grafana dashboards from provider-defined metadata.
 
 ## Running
 
-To run this script simply run:
+```shell
+go run ./cmd/grafanadashboards/ --output-path ./charts/otc-prometheus-exporter/dashboards
+```
+
+Or via Make:
 
 ```shell
-$ go run cmd/grafanadashboards/main.go ./... --output-path destination
+make generate-dashboards-into-helm
 ```

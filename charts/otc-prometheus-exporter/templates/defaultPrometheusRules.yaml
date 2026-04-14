@@ -1,43 +1,26 @@
-{{- if and .Values.defaultPrometheusRules.enabled (or .Values.defaultPrometheusRules.rules.rds .Values.defaultPrometheusRules.rules.obs .Values.defaultPrometheusRules.rules.elb) }}
-apiVersion: v1
-kind: List
+{{- if .Values.prometheusRules.enabled }}
+{{- range $namespace, $config := .Values.targets.namespaces }}
+{{- $values := mustMergeOverwrite (deepCopy $.Values.targets.defaults) (default dict $config) }}
+{{- if $values.enabled }}
+{{- $name := $values.rules }}
+{{- if ne (toString $name) "false" }}
+{{- if or (empty $name) (eq (toString $name) "true") }}
+  {{- $name = include "otc-prometheus-exporter.namespaceName" $namespace }}
+{{- end }}
+{{- $content := $.Files.Get (printf "alerts/%s.yaml" $name) }}
+{{- if $content }}
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
 metadata:
-  name: {{ include "otc-prometheus-exporter.fullname" . }}-default-prometheus-rules
-  namespace: {{ template "otc-prometheus-exporter.namespace" . }}
-items:
-  {{- if .Values.defaultPrometheusRules.rules.rds }}
-  - apiVersion: monitoring.coreos.com/v1
-    kind: PrometheusRule
-    metadata:
-      name: {{ template "otc-prometheus-exporter.name" $ }}-rds-postgresql-alerts
-      namespace: {{ template "otc-prometheus-exporter.namespace" . }}
-      labels:
-{{ include "otc-prometheus-exporter.labels" . | indent 8 }}
-    spec:
-      {{- .Files.Get "alerts/postgresql.yaml" | nindent 6 }}
-  {{- end }}
-
-  {{- if .Values.defaultPrometheusRules.rules.obs }}
-  - apiVersion: monitoring.coreos.com/v1
-    kind: PrometheusRule
-    metadata:
-      name: {{ template "otc-prometheus-exporter.name" $ }}-obs-alerts
-      namespace: {{ template "otc-prometheus-exporter.namespace" . }}
-      labels:
-{{ include "otc-prometheus-exporter.labels" . | indent 8 }}
-    spec:
-      {{- .Files.Get "alerts/obs.yaml" | nindent 6 }}
-  {{- end }}
-
-  {{- if .Values.defaultPrometheusRules.rules.elb }}
-  - apiVersion: monitoring.coreos.com/v1
-    kind: PrometheusRule
-    metadata:
-      name: {{ template "otc-prometheus-exporter.name" $ }}-elb-alerts
-      namespace: {{ template "otc-prometheus-exporter.namespace" . }}
-      labels:
-{{ include "otc-prometheus-exporter.labels" . | indent 8 }}
-    spec:
-      {{- .Files.Get "alerts/elb.yaml" | nindent 6 }}
-  {{- end }}
+  name: {{ $.Release.Name }}-{{ $name }}-alerts
+  namespace: {{ template "otc-prometheus-exporter.namespace" $ }}
+  labels:
+{{ include "otc-prometheus-exporter.labels" $ | indent 4 }}
+spec:
+  {{- $content | nindent 2 }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
 {{- end }}

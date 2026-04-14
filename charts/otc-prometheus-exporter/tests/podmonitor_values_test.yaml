@@ -1,0 +1,54 @@
+suite: PodMonitor values inheritance
+templates:
+  - podmonitor.yaml
+tests:
+  - it: namespace-level interval/scrapeTimeout overrides podMonitor defaults
+    values:
+      - values/ecs-custom-interval.yaml
+    asserts:
+      - contains:
+          path: spec.podMetricsEndpoints
+          content:
+            path: /metrics
+            port: metrics
+            params:
+              namespace:
+                - SYS.ECS
+              enrich:
+                - "true"
+            interval: "60s"
+            scrapeTimeout: "25s"
+
+  - it: podMonitor defaults flow to namespace endpoints when not overridden
+    values:
+      - values/only-ecs-podmonitor.yaml
+    asserts:
+      - contains:
+          path: spec.podMetricsEndpoints
+          content:
+            path: /metrics
+            port: metrics
+            params:
+              namespace:
+                - SYS.ECS
+              enrich:
+                - "true"
+            interval: "30s"
+            scrapeTimeout: "15s"
+
+  - it: namespace enrich=false overrides default enrich=true
+    values:
+      - values/ecs-no-enrich.yaml
+    asserts:
+      - contains:
+          path: spec.podMetricsEndpoints
+          content:
+            path: /metrics
+            port: metrics
+            params:
+              namespace:
+                - SYS.ECS
+              enrich:
+                - "false"
+            interval: "30s"
+            scrapeTimeout: "15s"

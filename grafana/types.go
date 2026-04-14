@@ -4,7 +4,7 @@ package grafana
 // Input was a simple grafana dashboard to obtaint the needed types
 // Was also modified a little
 
-type Dashboad struct {
+type Dashboard struct {
 	Inputs               []Input     `json:"__inputs"`
 	Elements             Elements    `json:"__elements"`
 	Requires             []Require   `json:"__requires"`
@@ -166,20 +166,21 @@ type Templating struct {
 	List []TemplatingVariable `json:"list"`
 }
 type TemplatingVariable struct {
-	Current     Current `json:"current"`
-	Description string  `json:"description"`
-	Hide        int     `json:"hide"`
-	IncludeAll  bool    `json:"includeAll"`
-	Label       string  `json:"label"`
-	Multi       bool    `json:"multi"`
-	Name        string  `json:"name"`
-	Options     []any   `json:"options"`
-	Query       string  `json:"query"`
-	QueryValue  string  `json:"queryValue"`
-	Refresh     int     `json:"refresh"`
-	Regex       string  `json:"regex"`
-	SkipURLSync bool    `json:"skipUrlSync"`
-	Type        string  `json:"type"`
+	Current     Current     `json:"current"`
+	Datasource  *Datasource `json:"datasource,omitempty"`
+	Description string      `json:"description"`
+	Hide        int         `json:"hide"`
+	IncludeAll  bool        `json:"includeAll"`
+	Label       string      `json:"label"`
+	Multi       bool        `json:"multi"`
+	Name        string      `json:"name"`
+	Options     []any       `json:"options"`
+	Query       string      `json:"query"`
+	QueryValue  string      `json:"queryValue"`
+	Refresh     int         `json:"refresh"`
+	Regex       string      `json:"regex"`
+	SkipURLSync bool        `json:"skipUrlSync"`
+	Type        string      `json:"type"`
 }
 type Current struct {
 	Selected bool   `json:"selected"`

@@ -1,0 +1,74 @@
+suite: PodMonitor
+templates:
+  - podmonitor.yaml
+tests:
+  - it: renders nothing when podMonitor.enabled is false
+    set:
+      podMonitor:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders PodMonitor when enabled
+    set:
+      podMonitor:
+        enabled: true
+        selfMonitoring: true
+        defaults:
+          interval: "30s"
+          scrapeTimeout: "15s"
+      targets:
+        defaults:
+          enabled: false
+    asserts:
+      - isKind:
+          of: PodMonitor
+
+  - it: includes self-monitoring endpoint when selfMonitoring is true
+    set:
+      podMonitor:
+        enabled: true
+        selfMonitoring: true
+        defaults:
+          interval: "30s"
+          scrapeTimeout: "15s"
+      targets:
+        defaults:
+          enabled: false
+    asserts:
+      - contains:
+          path: spec.podMetricsEndpoints
+          content:
+            path: /metrics
+            port: metrics
+            interval: "30s"
+            scrapeTimeout: "15s"
+
+  - it: excludes self-monitoring endpoint when selfMonitoring is false
+    values:
+      - values/only-ecs-podmonitor.yaml
+    asserts:
+      - lengthEqual:
+          path: spec.podMetricsEndpoints
+          count: 1
+      - equal:
+          path: spec.podMetricsEndpoints[0].params.namespace[0]
+          value: SYS.ECS
+
+  - it: respects namespaceOverride
+    set:
+      namespaceOverride: monitoring
+      podMonitor:
+        enabled: true
+        selfMonitoring: false
+        defaults:
+          interval: "30s"
+          scrapeTimeout: "15s"
+      targets:
+        defaults:
+          enabled: false
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: monitoring

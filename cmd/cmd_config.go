@@ -17,17 +17,25 @@ func InitializeConfig(cmd *cobra.Command, flagToEnvMapping map[string]string) er
 	v := viper.New()
 	v.AutomaticEnv()
 
-	cmd.Flags().VisitAll(
-		func(f *pflag.Flag) {
-			configName, ok := flagToEnvMapping[f.Name]
-			if !ok {
-				return
+	var setErr error
+	cmd.Flags().VisitAll(func(f *pflag.Flag) {
+		if setErr != nil {
+			return
+		}
+		configName, ok := flagToEnvMapping[f.Name]
+		if !ok {
+			return
+		}
+		if !f.Changed && v.IsSet(configName) {
+			val := v.Get(configName)
+			if err := cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val)); err != nil {
+				setErr = fmt.Errorf("flag %q from env %q: %w", f.Name, configName, err)
 			}
-			if !f.Changed && v.IsSet(configName) {
-				val := v.Get(configName)
-				_ = cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))
-			}
-		})
+		}
+	})
+	if setErr != nil {
+		return setErr
+	}
 
 	return nil
 }

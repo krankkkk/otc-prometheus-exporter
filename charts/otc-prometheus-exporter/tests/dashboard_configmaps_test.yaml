@@ -1,0 +1,62 @@
+suite: dashboard ConfigMaps
+templates:
+  - dashboard-configmaps.yaml
+tests:
+  - it: renders nothing when dashboards.enabled is false
+    set:
+      dashboards:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: renders only self-monitoring dashboard when no namespaces have dashboards
+    set:
+      dashboards:
+        enabled: true
+        selfMonitoring: true
+      targets:
+        defaults:
+          enabled: false
+          dashboard: false
+    asserts:
+      - hasDocuments:
+          count: 1
+      - matchRegex:
+          path: metadata.name
+          pattern: dashboard-exporter$
+
+  - it: skips self-monitoring dashboard when selfMonitoring is false
+    set:
+      dashboards:
+        enabled: true
+        selfMonitoring: false
+      targets:
+        defaults:
+          enabled: false
+          dashboard: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: skips namespace with dashboard set to false
+    values:
+      - values/only-ecs-no-dashboard.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: respects namespaceOverride
+    set:
+      namespaceOverride: grafana
+      dashboards:
+        enabled: true
+        selfMonitoring: true
+      targets:
+        defaults:
+          enabled: false
+          dashboard: false
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: grafana

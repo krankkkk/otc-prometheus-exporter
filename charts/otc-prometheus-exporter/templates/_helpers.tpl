@@ -73,6 +73,15 @@ imagePullSecrets:
 {{- end }}
 
 {{/*
+Derive a short name from a CES namespace key.
+Strips SYS./SERVICE. prefix and lowercases: SYS.ECS -> ecs, SERVICE.BMS -> bms.
+Used for dashboard filenames, alert filenames, and resource names.
+*/}}
+{{- define "otc-prometheus-exporter.namespaceName" -}}
+{{- . | trimPrefix "SYS." | trimPrefix "SERVICE." | lower -}}
+{{- end -}}
+
+{{/*
 Allow the release namespace to be overridden for multi-namespace deployments in combined charts
 */}}
 {{- define "otc-prometheus-exporter.namespace" -}}
