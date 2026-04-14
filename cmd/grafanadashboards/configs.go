@@ -552,8 +552,8 @@ func alarmDashboard() grafana.DashboardConfig {
 		Sections: []grafana.PanelSection{
 			{Title: "Overview", Panels: []grafana.PanelConfig{
 				{Metric: "otc_alarm_state", Title: "Firing Alarms", Unit: "short", Type: grafana.Stat,
-					Expr:   `count(otc_alarm_state == 1) or vector(0)`,
-					Legend: "firing",
+					Expr:       `count(otc_alarm_state == 1) or vector(0)`,
+					Legend:     "firing",
 					Thresholds: []grafana.Threshold{{Value: 0, Color: "green"}, {Value: 1, Color: "red"}}},
 			}},
 			{Title: "Alarm States", Panels: []grafana.PanelConfig{

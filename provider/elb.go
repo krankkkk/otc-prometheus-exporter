@@ -145,4 +145,3 @@ func convertELBToMetrics(lbs []elbLB.LoadBalancer) []*dto.MetricFamily {
 	}
 	return []*dto.MetricFamily{NewGaugeMetricFamily("elb_loadbalancer_status", metrics)}
 }
-

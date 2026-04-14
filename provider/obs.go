@@ -26,4 +26,3 @@ func (p *OBSProvider) Collect(ctx context.Context, client *otcclient.Client) ([]
 
 	return families, nil
 }
-

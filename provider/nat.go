@@ -64,4 +64,3 @@ func convertNATGatewaysToMetrics(gateways []natGW.NatGateway) []*dto.MetricFamil
 	}
 	return []*dto.MetricFamily{NewGaugeMetricFamily("nat_gateway_status", metrics)}
 }
-

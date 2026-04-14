@@ -75,4 +75,3 @@ func convertDMSInstancesToMetrics(instances []dmsInstances.Instance) []*dto.Metr
 		NewGaugeMetricFamily("dms_instance_partitions", partitionMetrics),
 	}
 }
-

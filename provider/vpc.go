@@ -57,4 +57,3 @@ func convertVPCBandwidthsToMetrics(bandwidths []vpcBW.BandWidth) []*dto.MetricFa
 	}
 	return []*dto.MetricFamily{NewGaugeMetricFamily("vpc_bandwidth_size_mbit", metrics)}
 }
-

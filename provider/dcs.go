@@ -70,4 +70,3 @@ func convertDCSInstancesToMetrics(instances []dcsLifecycle.Instance) []*dto.Metr
 		NewGaugeMetricFamily("dcs_instance_capacity_mb", capacityMetrics),
 	}
 }
-

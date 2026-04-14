@@ -87,4 +87,3 @@ func convertRDSInstancesToMetrics(instances []rdsInstances.InstanceResponse) []*
 		NewGaugeMetricFamily("rds_volume_size_gb", volumeMetrics),
 	}
 }
-

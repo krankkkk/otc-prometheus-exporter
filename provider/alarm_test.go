@@ -75,8 +75,8 @@ func TestConvertAlarmsToMetrics(t *testing.T) {
 
 	// Build a map from alarm_id to metric for easy assertion.
 	byID := make(map[string]*struct {
-		value    float64
-		labels   map[string]string
+		value  float64
+		labels map[string]string
 	})
 	for _, m := range fam.Metric {
 		labels := make(map[string]string)

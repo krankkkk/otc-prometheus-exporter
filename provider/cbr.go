@@ -70,4 +70,3 @@ func convertCBRBackupsToMetrics(backups []cbrBackups.Backup) []*dto.MetricFamily
 		NewGaugeMetricFamily("cbr_backup_size_gb", sizeMetrics),
 	}
 }
-

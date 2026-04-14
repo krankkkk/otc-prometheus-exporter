@@ -91,4 +91,3 @@ func convertDDSInstancesToMetrics(instances []ddsInst.InstanceResponse) []*dto.M
 		NewGaugeMetricFamily("dds_node_status", nodeMetrics),
 	}
 }
-

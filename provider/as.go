@@ -81,4 +81,3 @@ func convertASGroupsToMetrics(groups []asGroups.Group) []*dto.MetricFamily {
 		NewGaugeMetricFamily("as_group_status", statusMetrics),
 	}
 }
-

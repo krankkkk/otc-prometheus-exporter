@@ -113,4 +113,3 @@ func convertAlarmsToMetrics(alarms []cesAlarms.MetricAlarms) []*dto.MetricFamily
 		NewGaugeMetricFamily("otc_alarm_state", metrics),
 	}
 }
-

@@ -161,4 +161,3 @@ func convertECSInstancesToMetrics(servers []otcCompute.Server) []*dto.MetricFami
 	}
 	return []*dto.MetricFamily{NewGaugeMetricFamily("ecs_instance_status", metrics)}
 }
-
