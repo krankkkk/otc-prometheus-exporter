@@ -68,6 +68,8 @@ func metricsHandler(registry *provider.Registry, client *otcclient.Client, logge
 			return
 		}
 
+		provider.EnrichWithHelp(families)
+
 		metricCount := 0
 		for _, fam := range families {
 			metricCount += len(fam.GetMetric())

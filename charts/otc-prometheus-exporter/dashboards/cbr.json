@@ -143,7 +143,7 @@
         }
       },
       "targets": null,
-      "title": "Backups",
+      "title": "Metrics",
       "type": "row"
     },
     {
@@ -151,6 +151,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "Used capacity of the vault",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -195,21 +196,17 @@
               {
                 "color": "green",
                 "value": null
-              },
-              {
-                "color": "red",
-                "value": 1
               }
             ]
           },
-          "unit": "short",
+          "unit": "gbytes",
           "unitScale": true
         },
         "overrides": null
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
+        "w": 12,
         "x": 0,
         "y": 1
       },
@@ -234,24 +231,25 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "cbr_backup_status{resource_name=~\"$resource_name\"}",
+          "expr": "cbr_used_vault_size{resource_name=~\"$resource_name\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "instant": true,
+          "instant": false,
           "legendFormat": "{{resource_name}}",
-          "range": false,
+          "range": true,
           "refId": "A",
           "useBackend": false
         }
       ],
-      "title": "Backup Status",
-      "type": "table"
+      "title": "Used Vault Size",
+      "type": "timeseries"
     },
     {
       "datasource": {
         "type": "prometheus",
         "uid": "${datasource}"
       },
+      "description": "Capacity usage of the vault",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -299,16 +297,16 @@
               }
             ]
           },
-          "unit": "decgbytes",
+          "unit": "percent",
           "unitScale": true
         },
         "overrides": null
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 9
+        "w": 12,
+        "x": 12,
+        "y": 1
       },
       "id": 3,
       "options": {
@@ -331,18 +329,18 @@
           },
           "disableTextWrap": false,
           "editorMode": "builder",
-          "expr": "cbr_backup_size_gb{resource_name=~\"$resource_name\"}",
+          "expr": "cbr_vault_util{resource_name=~\"$resource_name\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "instant": true,
+          "instant": false,
           "legendFormat": "{{resource_name}}",
-          "range": false,
+          "range": true,
           "refId": "A",
           "useBackend": false
         }
       ],
-      "title": "Backup Size",
-      "type": "table"
+      "title": "Vault Usage",
+      "type": "timeseries"
     }
   ],
   "refresh": "30s",
@@ -404,7 +402,7 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "CBR - Cloud Backup and Recovery",
+  "title": "CBR - Cloud Backup \u0026 Recovery",
   "uid": "otc-cbr",
   "version": 4,
   "weekStart": ""

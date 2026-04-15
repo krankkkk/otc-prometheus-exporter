@@ -34,7 +34,7 @@ func ShouldEnrich(ctx context.Context) bool {
 func NewGaugeMetricFamily(name string, metrics []*dto.Metric) *dto.MetricFamily {
 	return &dto.MetricFamily{
 		Name:   &name,
-		Type:   new(dto.MetricType_GAUGE),
+		Type:   dto.MetricType_GAUGE.Enum(),
 		Metric: metrics,
 	}
 }
@@ -50,9 +50,10 @@ func NewGaugeMetric(value float64, labels map[string]string) *dto.Metric {
 
 	pairs := make([]*dto.LabelPair, 0, len(labels))
 	for _, k := range keys {
+		name, labelValue := k, labels[k]
 		pairs = append(pairs, &dto.LabelPair{
-			Name:  new(k),
-			Value: new(labels[k]),
+			Name:  &name,
+			Value: &labelValue,
 		})
 	}
 
@@ -118,6 +119,20 @@ func FillResourceNameFromLabel(families []*dto.MetricFamily, sourceLabel string)
 			if nameLabel != nil && nameLabel.GetValue() == "" && sourceValue != "" {
 				nameLabel.Value = &sourceValue
 			}
+		}
+	}
+}
+
+// EnrichWithHelp fills the Help field on any MetricFamily whose Help is currently
+// empty, using the generated MetricHelpStrings map. Called once per scrape after
+// Collect returns, so no individual provider needs to know about the help strings.
+func EnrichWithHelp(families []*dto.MetricFamily) {
+	for _, fam := range families {
+		if fam.Help != nil && *fam.Help != "" {
+			continue
+		}
+		if help, ok := MetricHelpStrings[fam.GetName()]; ok && help != "" {
+			fam.Help = &help
 		}
 	}
 }
